@@ -1,0 +1,1025 @@
+const STORAGE_KEY = "danan-business-admin-v2";
+const CLOUD_API_URL = "https://script.google.com/macros/s/AKfycby_YVfqeWsBQlHtkd1d5tILCXz3qTcIL7uAmlRI1K2Kp8xjVvxHTU7Jupw8O0nHUinz/exec";
+let cloudSyncTimer = null;
+
+const partners = [
+  "王沛琳", "王淑貞", "冷蕙名", "余惠如", "宋美珠", "林建智", "林恒儀", "林靂玄",
+  "胡春木", "徐盛雄", "陳光霆", "陳亞琴", "陳柏宏", "陳雅惠", "陳嘉儀", "詹穗芬",
+  "劉志剛", "林婉茹", "黃立鈞", "潘禹璇", "鍾秀琴", "謝心瑀", "簡偉宏", "魏廉庭"
+];
+
+const goalTypes = ["進案", "委託", "帶看", "議價", "廣告", "拜訪", "發DM", "掃街", "收斡", "成交"];
+const monthLabels = Array.from({ length: 12 }, (_, i) => `${i + 1}月`);
+
+let state = loadState();
+
+const els = {
+  yearSelect: document.querySelector("#yearSelect"),
+  annualTargetInput: document.querySelector("#annualTargetInput"),
+  annualTargetDisplay: document.querySelector("#annualTargetDisplay"),
+  overviewKpis: document.querySelector("#overviewKpis"),
+  overviewPartnerTable: document.querySelector("#overviewPartnerTable"),
+  exportOverviewBtn: document.querySelector("#exportOverviewBtn"),
+  revenueChart: document.querySelector("#revenueChart"),
+  profitChart: document.querySelector("#profitChart"),
+  gapChart: document.querySelector("#gapChart"),
+  companyTable: document.querySelector("#companyTable"),
+  exportCompanyBtn: document.querySelector("#exportCompanyBtn"),
+  partnerMonth: document.querySelector("#partnerMonth"),
+  partnerName: document.querySelector("#partnerName"),
+  exportPartnersBtn: document.querySelector("#exportPartnersBtn"),
+  partnerImportFile: document.querySelector("#partnerImportFile"),
+  partnerImportStatus: document.querySelector("#partnerImportStatus"),
+  partnerForm: document.querySelector("#partnerForm"),
+  annualRevenueTarget: document.querySelector("#annualRevenueTarget"),
+  actualRevenue: document.querySelector("#actualRevenue"),
+  actualListings: document.querySelector("#actualListings"),
+  actualOffers: document.querySelector("#actualOffers"),
+  actualClosings: document.querySelector("#actualClosings"),
+  partnerCards: document.querySelector("#partnerCards"),
+  weeklyImportFile: document.querySelector("#weeklyImportFile"),
+  importStatus: document.querySelector("#importStatus"),
+  weeklyForm: document.querySelector("#weeklyForm"),
+  weeklyDate: document.querySelector("#weeklyDate"),
+  weeklyPartner: document.querySelector("#weeklyPartner"),
+  weeklyType: document.querySelector("#weeklyType"),
+  weeklyTarget: document.querySelector("#weeklyTarget"),
+  weeklyActual: document.querySelector("#weeklyActual"),
+  weeklyBoard: document.querySelector("#weeklyBoard")
+  , exportWeeklyBtn: document.querySelector("#exportWeeklyBtn")
+};
+
+init();
+
+async function init() {
+  setupSelects();
+  bindEvents();
+  render();
+  await loadCloudState();
+}
+
+function loadState() {
+  const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+  if (saved) return normalizeState(saved);
+
+  const year = new Date().getFullYear();
+  return {
+    year,
+    annualTargets: { [year]: 6000 },
+    company: seedCompany(year),
+    partners: seedLastYear(year),
+    weekly: []
+  };
+}
+
+function normalizeState(raw) {
+  return {
+    year: raw.year || new Date().getFullYear(),
+    annualTargets: raw.annualTargets || { [raw.year || new Date().getFullYear()]: 6000 },
+    company: (raw.company || []).map((row) => ({
+      closedRevenue: Number(row.closedRevenue) || Number(row.actualRevenue) || 0,
+      ...row,
+      actualRevenue: Number(row.actualRevenue) || 0
+    })),
+    partners: raw.partners || [],
+    weekly: raw.weekly || []
+  };
+}
+
+function seedCompany(year) {
+  return Array.from({ length: 12 }, (_, i) => ({
+    year,
+    month: i + 1,
+    targetRevenue: [320, 340, 360, 380, 420, 450, 470, 480, 500, 520, 540, 560][i],
+    closedRevenue: [260, 330, 310, 390, 360, 440, 0, 0, 0, 0, 0, 0][i],
+    agentCount: 22,
+    fixedCost: 120,
+    variableCost: [40, 50, 44, 58, 52, 66, 0, 0, 0, 0, 0, 0][i],
+    closedDeals: [3, 4, 3, 5, 4, 5, 0, 0, 0, 0, 0, 0][i]
+  }));
+}
+
+function seedLastYear(year) {
+  const lastYear = year - 1;
+  return partners.flatMap((partner, partnerIndex) => {
+    return Array.from({ length: 12 }, (_, monthIndex) => ({
+      year: lastYear,
+      month: monthIndex + 1,
+      partnerName: partner,
+      annualRevenueTarget: 1200,
+      actualRevenue: monthIndex < 6 ? 55 + ((partnerIndex + monthIndex) % 6) * 8 : 0,
+      actualListings: 3 + ((partnerIndex + monthIndex) % 4),
+      actualOffers: 1 + ((partnerIndex + monthIndex) % 2),
+      actualClosings: (partnerIndex + monthIndex) % 5 === 0 ? 1 : 0
+    }));
+  });
+}
+
+function setupSelects() {
+  const currentYear = new Date().getFullYear();
+  els.yearSelect.innerHTML = Array.from({ length: currentYear - 2020 + 2 }, (_, index) => 2020 + index)
+    .map((year) => `<option ${year === state.year ? "selected" : ""}>${year}</option>`).join("");
+  els.partnerMonth.innerHTML = monthLabels.map((label, i) => `<option value="${i + 1}">${label}</option>`).join("");
+  els.partnerName.innerHTML = partners.map((name) => `<option>${name}</option>`).join("");
+  els.weeklyPartner.innerHTML = partners.map((name) => `<option>${name}</option>`).join("");
+  els.weeklyType.innerHTML = goalTypes.map((type) => `<option>${type}</option>`).join("");
+  els.weeklyDate.value = isoDate(new Date());
+}
+
+function bindEvents() {
+  document.querySelectorAll(".tab").forEach((tab) => {
+    tab.addEventListener("click", () => switchView(tab.dataset.view));
+  });
+
+  els.yearSelect.addEventListener("change", () => {
+    state.year = Number(els.yearSelect.value);
+    state.company = ensureCompanyYear(state.year);
+    ensureAnnualTarget(state.year);
+    saveState();
+    render();
+  });
+
+  els.annualTargetInput.addEventListener("change", () => {
+    state.annualTargets[state.year] = num(els.annualTargetInput.value);
+    saveState();
+    renderOverview();
+  });
+
+  els.partnerMonth.addEventListener("change", () => {
+    fillPartnerForm();
+    renderPartners();
+  });
+  els.partnerName.addEventListener("change", fillPartnerForm);
+  els.partnerForm.addEventListener("submit", savePartnerRecord);
+  els.partnerImportFile.addEventListener("change", importPartnerExcel);
+  els.weeklyForm.addEventListener("submit", saveWeeklyGoal);
+  els.weeklyImportFile.addEventListener("change", importWeeklyExcel);
+  els.exportOverviewBtn.addEventListener("click", exportOverviewReport);
+  els.exportCompanyBtn.addEventListener("click", exportCompanyReport);
+  els.exportPartnersBtn.addEventListener("click", exportPartnersReport);
+  els.exportWeeklyBtn.addEventListener("click", exportWeeklyReport);
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  scheduleCloudSave();
+}
+
+async function loadCloudState() {
+  setSyncStatus("正在讀取 Google Sheet 資料...");
+
+  try {
+    const response = await fetch(`${CLOUD_API_URL}?action=listAll&ts=${Date.now()}`);
+    const payload = await response.json();
+
+    if (!payload.ok) throw new Error(payload.error || "Cloud load failed");
+
+    if (payload.state && !isCloudStateEmpty(payload.state)) {
+      state = normalizeState({ ...payload.state, year: state.year });
+      state.company = ensureCompanyYear(state.year);
+      ensureAnnualTarget(state.year);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      setupSelects();
+      render();
+      setSyncStatus("已讀取 Google Sheet 資料");
+      return;
+    }
+
+    saveState();
+    setSyncStatus("Google Sheet 已建立，已同步目前資料");
+  } catch (error) {
+    console.warn(error);
+    setSyncStatus("雲端讀取失敗，先使用本機資料");
+  }
+}
+
+function scheduleCloudSave() {
+  window.clearTimeout(cloudSyncTimer);
+  cloudSyncTimer = window.setTimeout(saveCloudState, 700);
+}
+
+async function saveCloudState() {
+  setSyncStatus("正在同步 Google Sheet...");
+
+  try {
+    await fetch(CLOUD_API_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: "saveAll", state })
+    });
+    setSyncStatus("已同步 Google Sheet");
+  } catch (error) {
+    console.warn(error);
+    setSyncStatus("雲端同步失敗，資料已先存在本機");
+  }
+}
+
+function isCloudStateEmpty(cloudState) {
+  return !Object.keys(cloudState.annualTargets || {}).length
+    && !(cloudState.company || []).length
+    && !(cloudState.partners || []).length
+    && !(cloudState.weekly || []).length;
+}
+
+function setSyncStatus(message) {
+  [els.partnerImportStatus, els.importStatus].forEach((target) => {
+    if (target) target.textContent = message;
+  });
+}
+
+function ensureCompanyYear(year) {
+  const rows = state.company.filter((row) => row.year === year);
+  return rows.length === 12 ? state.company : [...state.company, ...seedCompany(year)];
+}
+
+function ensureAnnualTarget(year) {
+  if (!state.annualTargets[year]) state.annualTargets[year] = 6000;
+}
+
+function render() {
+  renderOverview();
+  renderCompanyTable();
+  fillPartnerForm();
+  renderPartners();
+  renderWeekly();
+}
+
+function switchView(viewId) {
+  document.querySelectorAll(".tab").forEach((tab) => tab.classList.toggle("active", tab.dataset.view === viewId));
+  document.querySelectorAll(".view").forEach((view) => view.classList.toggle("active", view.id === viewId));
+}
+
+function companyRows() {
+  return state.company.filter((row) => row.year === state.year).sort((a, b) => a.month - b.month);
+}
+
+function monthlyPartnerRows(month) {
+  return state.partners.filter((record) => record.year === state.year && record.month === month);
+}
+
+function monthlyPartnerRevenue(month) {
+  return monthlyPartnerRows(month).reduce((sum, record) => sum + num(record.actualRevenue), 0);
+}
+
+function monthlyPartnerClosings(month) {
+  return monthlyPartnerRows(month).reduce((sum, record) => sum + num(record.actualClosings), 0);
+}
+
+function annualCost() {
+  return companyRows().reduce((sum, row) => sum + num(row.fixedCost) + num(row.variableCost), 0);
+}
+
+function renderOverview() {
+  const rows = companyRows();
+  const annualTarget = num(state.annualTargets[state.year]);
+  els.annualTargetInput.value = money(annualTarget);
+  els.annualTargetDisplay.textContent = `${money(annualTarget)}萬`;
+
+  const totals = rows.reduce((sum, row) => {
+    const actualRevenue = monthlyPartnerRevenue(row.month);
+    const profit = calcProfit(row);
+    sum.target += row.targetRevenue;
+    sum.annualTarget += annualTarget / 12;
+    sum.revenue += actualRevenue;
+    sum.closedRevenue += row.closedRevenue;
+    sum.profit += profit;
+    sum.closed += monthlyPartnerClosings(row.month);
+    sum.agentMonths += row.agentCount;
+    return sum;
+  }, { target: 0, annualTarget: 0, revenue: 0, closedRevenue: 0, profit: 0, closed: 0, agentMonths: 0 });
+
+  const avgEfficiency = totals.agentMonths ? Math.round(totals.revenue / totals.agentMonths) : 0;
+  const achievement = annualTarget ? Math.round((totals.revenue / annualTarget) * 100) : 0;
+  const gap = totals.revenue - annualTarget;
+
+  els.overviewKpis.innerHTML = [
+    kpi("年度累積業績", `${money(totals.revenue)}萬`, `年度達成率 ${achievement}%`),
+    kpi("年度關帳業績", `${money(totals.closedRevenue)}萬`, "盈餘以此計算"),
+    kpi("年度總盈餘", `${money(totals.profit)}萬`, profitStatus(totals.profit)),
+    kpi("年度成本", `${money(annualCost())}萬`, "固定成本 + 變動成本"),
+    kpi("目標差距", `${signedMoney(gap)}萬`, gap >= 0 ? "超前年度目標" : "落後年度目標")
+  ].join("");
+
+  drawLineChart(els.revenueChart, rows, "actualRevenue", "targetRevenue");
+  drawProfitChart(els.profitChart, rows);
+  drawGapChart(els.gapChart, rows);
+  renderOverviewPartnerTable();
+}
+
+function kpi(label, value, context) {
+  return `<article class="kpi"><span>${label}</span><strong>${value}</strong><small>${context}</small></article>`;
+}
+
+function renderCompanyTable() {
+  const rows = companyRows();
+  els.companyTable.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>月份</th><th>預測業績</th><th>實際業績</th><th>關帳業績</th><th>人數</th><th>固定成本</th><th>變動成本</th><th>盈餘</th><th>人效</th><th>差距</th><th>成交</th>
+        </tr>
+      </thead>
+      <tbody>${rows.map(companyRowHtml).join("")}</tbody>
+    </table>
+  `;
+
+  els.companyTable.querySelectorAll("input").forEach((input) => {
+    input.addEventListener("change", () => {
+      const row = state.company.find((item) => item.year === state.year && item.month === Number(input.dataset.month));
+      row[input.dataset.field] = num(input.value);
+      saveState();
+      render();
+    });
+  });
+}
+
+function renderOverviewPartnerTable() {
+  const rows = annualPartnerRows();
+  els.overviewPartnerTable.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>排名</th><th>夥伴</th>
+          ${monthLabels.map((label) => `<th>${label}</th>`).join("")}
+          <th>年度總業績</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map((row, index) => `
+          <tr>
+            <td data-label="排名">${index + 1}</td>
+            <td data-label="夥伴">${row.partnerName}</td>
+            ${row.months.map((value, monthIndex) => `<td data-label="${monthIndex + 1}月">${money(value)}萬</td>`).join("")}
+            <td data-label="年度總業績"><strong>${money(row.total)}萬</strong></td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
+}
+
+function annualPartnerRows() {
+  return partners.map((partnerName) => {
+    const months = Array.from({ length: 12 }, (_, index) => {
+      const record = findPartnerRecord(partnerName, index + 1, state.year);
+      return num(record?.actualRevenue);
+    });
+    const total = months.reduce((sum, value) => sum + value, 0);
+    return { partnerName, months, total };
+  }).sort((a, b) => b.total - a.total || a.partnerName.localeCompare(b.partnerName, "zh-Hant"));
+}
+
+function companyRowHtml(row) {
+  const actualRevenue = monthlyPartnerRevenue(row.month);
+  const profit = calcProfit(row);
+  const efficiency = row.agentCount ? Math.round(actualRevenue / row.agentCount) : 0;
+  const gap = actualRevenue - row.targetRevenue;
+  const closings = monthlyPartnerClosings(row.month);
+  return `
+    <tr>
+      <td data-label="月份">${row.month}月</td>
+      ${inputCell(row, "targetRevenue", "預測業績")}
+      <td data-label="實際業績"><strong>${money(actualRevenue)}萬</strong></td>
+      ${inputCell(row, "closedRevenue", "關帳業績")}
+      ${inputCell(row, "agentCount", "人數")}
+      ${inputCell(row, "fixedCost", "固定成本")}
+      ${inputCell(row, "variableCost", "變動成本")}
+      <td data-label="盈餘">${money(profit)}萬</td>
+      <td data-label="人效">${money(efficiency)}萬</td>
+      <td data-label="差距" class="${gap >= 0 ? "status-good" : "status-risk"}">${signedMoney(gap)}萬</td>
+      <td data-label="成交件數"><strong>${closings}件</strong></td>
+    </tr>
+  `;
+}
+
+function inputCell(row, field, label) {
+  const step = ["targetRevenue", "closedRevenue", "fixedCost", "variableCost"].includes(field) ? "0.01" : "1";
+  const value = ["targetRevenue", "closedRevenue", "fixedCost", "variableCost"].includes(field) ? money(row[field] || 0) : row[field] || 0;
+  return `<td data-label="${label}"><input type="number" min="0" step="${step}" data-month="${row.month}" data-field="${field}" value="${value}"></td>`;
+}
+
+function fillPartnerForm() {
+  const record = findPartnerRecord();
+  els.annualRevenueTarget.value = money(record?.annualRevenueTarget || latestAnnualTarget(els.partnerName.value));
+  els.actualRevenue.value = money(record?.actualRevenue || 0);
+  els.actualListings.value = record?.actualListings || 0;
+  els.actualOffers.value = record?.actualOffers || 0;
+  els.actualClosings.value = record?.actualClosings || 0;
+}
+
+function findPartnerRecord(name = els.partnerName.value, month = Number(els.partnerMonth.value), year = state.year) {
+  return state.partners.find((record) => record.year === year && record.month === month && record.partnerName === name);
+}
+
+function latestAnnualTarget(name) {
+  const record = [...state.partners].reverse().find((item) => item.year === state.year && item.partnerName === name && item.annualRevenueTarget);
+  return record?.annualRevenueTarget || 1200;
+}
+
+function savePartnerRecord(event) {
+  event.preventDefault();
+  const month = Number(els.partnerMonth.value);
+  const partnerName = els.partnerName.value;
+  let record = findPartnerRecord(partnerName, month);
+  if (!record) {
+    record = { year: state.year, month, partnerName };
+    state.partners.push(record);
+  }
+
+  Object.assign(record, {
+    annualRevenueTarget: num(els.annualRevenueTarget.value),
+    actualRevenue: num(els.actualRevenue.value),
+    actualListings: num(els.actualListings.value),
+    actualOffers: num(els.actualOffers.value),
+    actualClosings: num(els.actualClosings.value)
+  });
+
+  saveState();
+  render();
+}
+
+function importPartnerExcel(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    const text = String(reader.result || "");
+    const imported = parsePartnerExcel(text);
+    upsertPartnerRecords(imported);
+    saveState();
+    render();
+    els.partnerImportStatus.textContent = `已匯入 ${imported.length} 筆夥伴績效`;
+    els.partnerImportFile.value = "";
+  };
+  reader.readAsText(file, "utf-8");
+}
+
+function parsePartnerExcel(text) {
+  const rows = parseTabularText(text);
+  if (rows.length < 2) return [];
+
+  const headerIndex = rows.findIndex((row) => row.some((cell) => /夥伴|姓名|業務/.test(cell)));
+  if (headerIndex < 0) return [];
+
+  const headers = rows[headerIndex].map(normalizeHeader);
+  return rows.slice(headerIndex + 1)
+    .map((row) => partnerRecordFromRow(headers, row))
+    .filter((record) => record.partnerName && partners.includes(record.partnerName));
+}
+
+function parseTabularText(text) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(text, "text/html");
+  const htmlRows = [...doc.querySelectorAll("tr")].map((tr) => [...tr.children].map((cell) => cell.textContent.trim()));
+  if (htmlRows.length) return htmlRows;
+
+  return text.split(/\r?\n/)
+    .map((line) => line.split(line.includes("\t") ? "\t" : ",").map((cell) => cell.trim()))
+    .filter((row) => row.some(Boolean));
+}
+
+function normalizeHeader(header) {
+  return String(header || "").replace(/\s/g, "");
+}
+
+function partnerRecordFromRow(headers, row) {
+  const get = (...names) => {
+    const index = headers.findIndex((header) => names.some((name) => header.includes(name)));
+    return index >= 0 ? row[index] : "";
+  };
+
+  const dateText = get("日期", "月份", "年月");
+  const parsedMonth = numberFromText(dateText);
+  return {
+    year: numberFromText(get("年度", "年份")) || yearFromText(dateText) || state.year,
+    month: parsedMonth >= 1 && parsedMonth <= 12 ? parsedMonth : Number(els.partnerMonth.value),
+    partnerName: get("夥伴", "姓名", "業務"),
+    annualRevenueTarget: numberFromText(get("年度業績目標", "年度目標", "業績目標")) || 1200,
+    actualRevenue: numberFromText(get("本月業績", "實際業績", "業績")),
+    actualListings: numberFromText(get("進案")),
+    actualOffers: numberFromText(get("收斡", "斡旋")),
+    actualClosings: numberFromText(get("成交件數", "成交"))
+  };
+}
+
+function upsertPartnerRecords(records) {
+  records.forEach((record) => {
+    const existing = state.partners.find((item) => item.year === record.year && item.month === record.month && item.partnerName === record.partnerName);
+    if (existing) {
+      Object.assign(existing, record);
+    } else {
+      state.partners.push(record);
+    }
+  });
+}
+
+function renderPartners() {
+  const month = Number(els.partnerMonth.value);
+  const rows = partners.map((name) => findPartnerRecord(name, month) || defaultPartnerRecord(name, month));
+  els.partnerCards.innerHTML = rows.map((record) => partnerCardHtml(record, month)).join("");
+}
+
+function defaultPartnerRecord(partnerName, month) {
+  return {
+    year: state.year,
+    month,
+    partnerName,
+    annualRevenueTarget: latestAnnualTarget(partnerName),
+    actualRevenue: 0,
+    actualListings: 0,
+    actualOffers: 0,
+    actualClosings: 0
+  };
+}
+
+function partnerCardHtml(record, selectedMonth) {
+  const annualTarget = num(record.annualRevenueTarget) || latestAnnualTarget(record.partnerName);
+  const ytdRevenue = partnerYtdRevenue(record.partnerName, selectedMonth, state.year);
+  const lastYtdRevenue = partnerYtdRevenue(record.partnerName, selectedMonth, state.year - 1);
+  const achievement = rate(ytdRevenue, annualTarget);
+  const yoyGap = ytdRevenue - lastYtdRevenue;
+  const latestClosing = latestClosingMonth(record.partnerName);
+  const cardClass = achievement <= 50 ? "card-low" : achievement < 80 ? "card-mid" : "card-high";
+
+  return `
+    <article class="partner-card ${cardClass}">
+      <h3>${record.partnerName}</h3>
+      <p class="advice">年度業績目標 ${money(annualTarget)}萬，目前達成 ${achievement}%</p>
+      <div class="metric-row">
+        ${metric("去年同期差", `${signedMoney(yoyGap)}萬`, `去年同期 ${money(lastYtdRevenue)}萬`)}
+        ${metric("本月業績", `${money(record.actualRevenue)}萬`, `${selectedMonth}月`)}
+        ${metric("最近成交", latestClosing || "尚無", "年/月")}
+      </div>
+      <div class="metric-row">
+        ${metric("進案", `${record.actualListings}件`, "本月")}
+        ${metric("收斡", `${record.actualOffers}件`, "本月")}
+        ${metric("成交", `${record.actualClosings}件`, "本月")}
+      </div>
+      <div class="progress"><span style="--value:${Math.min(100, achievement)}%"></span></div>
+      <p class="advice">${partnerAdvice(record, achievement, yoyGap)}</p>
+    </article>
+  `;
+}
+
+function partnerYtdRevenue(name, month, year) {
+  return state.partners
+    .filter((record) => record.year === year && record.partnerName === name && record.month <= month)
+    .reduce((sum, record) => sum + num(record.actualRevenue), 0);
+}
+
+function latestClosingMonth(name) {
+  const record = [...state.partners]
+    .filter((item) => item.partnerName === name && num(item.actualClosings) > 0)
+    .sort((a, b) => (b.year - a.year) || (b.month - a.month))[0];
+  return record ? `${record.year}/${String(record.month).padStart(2, "0")}` : "";
+}
+
+function saveWeeklyGoal(event) {
+  event.preventDefault();
+  state.weekly.push({
+    id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
+    year: state.year,
+    meetingDate: els.weeklyDate.value,
+    partnerName: els.weeklyPartner.value,
+    type: els.weeklyType.value,
+    target: num(els.weeklyTarget.value),
+    actual: num(els.weeklyActual.value),
+    source: "manual"
+  });
+  saveState();
+  els.weeklyTarget.value = 1;
+  els.weeklyActual.value = 0;
+  renderWeekly();
+}
+
+function importWeeklyExcel(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    const text = String(reader.result || "");
+    const imported = parseGoalExcel(text);
+    state.weekly.push(...imported);
+    saveState();
+    renderWeekly();
+    els.importStatus.textContent = `已匯入 ${imported.length} 筆小目標統計`;
+    els.weeklyImportFile.value = "";
+  };
+  reader.readAsText(file, "utf-8");
+}
+
+function parseGoalExcel(text) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(text, "text/html");
+  const rows = [...doc.querySelectorAll("tr")].map((tr) => [...tr.children].map((cell) => cell.textContent.trim()));
+  if (!rows.length) return [];
+
+  const bodyRows = rows.filter((row) => row.length >= 6 && row[0] && row[0] !== "夥伴");
+  return bodyRows.map((row) => {
+    const partnerName = row[0];
+    const latestDate = normalizeDate(row[1]) || isoDate(new Date());
+    const totalGoals = numberFromText(row[3]);
+    const completedGoals = numberFromText(row[4]);
+    return {
+      id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
+      year: Number(latestDate.slice(0, 4)) || state.year,
+      meetingDate: latestDate,
+      partnerName,
+      type: "月小目標統計",
+      target: totalGoals,
+      actual: completedGoals,
+      source: "import"
+    };
+  }).filter((goal) => partners.includes(goal.partnerName) && goal.target > 0);
+}
+
+function renderWeekly() {
+  const rows = state.weekly.filter((goal) => goal.year === state.year);
+  const grouped = rows.reduce((map, goal) => {
+    map[goal.partnerName] = map[goal.partnerName] || [];
+    map[goal.partnerName].push(goal);
+    return map;
+  }, {});
+
+  els.weeklyBoard.innerHTML = partners.map((name) => weeklyCardHtml(name, grouped[name] || [])).join("");
+}
+
+function weeklyCardHtml(name, goals) {
+  const completedGoals = goals.filter((goal) => goal.actual >= goal.target);
+  const done = completedGoals.length;
+  const totalTarget = goals.reduce((sum, goal) => sum + num(goal.target), 0);
+  const totalActual = goals.reduce((sum, goal) => sum + num(goal.actual), 0);
+  const rateValue = rate(totalActual, totalTarget);
+  const closingGoals = goals.filter((goal) => goal.type === "成交");
+  const closingTarget = closingGoals.reduce((sum, goal) => sum + num(goal.target), 0);
+  const closingActual = closingGoals.reduce((sum, goal) => sum + num(goal.actual), 0);
+  const closingRate = rate(closingActual, closingTarget);
+  const weakType = weakestWeeklyType(goals);
+  const completedText = completedGoals.length
+    ? completedGoals.map((goal) => `${goal.type} ${goal.actual}/${goal.target}`).join("、")
+    : "尚無完成小目標";
+  return `
+    <article class="weekly-card">
+      <h3>${name}</h3>
+      <p class="advice">本年 ${goals.length} 筆週目標/匯入統計，達成 ${done} 筆</p>
+      <div class="metric-row">
+        ${metric("完成小目標數", `${done}`, `共 ${goals.length} 筆`)}
+        ${metric("完成百分率", `${rateValue}%`, `${totalActual}/${totalTarget}`)}
+        ${metric("成交率", `${closingRate}%`, closingTarget ? `${closingActual}/${closingTarget}` : "尚無成交目標")}
+      </div>
+      <div class="progress"><span style="--value:${Math.min(100, rateValue)}%"></span></div>
+      <p class="completed-list"><strong>完成的小目標：</strong>${completedText}</p>
+      <p class="advice">${weeklyAdvice(rateValue, weakType)}</p>
+    </article>
+  `;
+}
+
+function metric(label, value, context) {
+  return `<div class="metric"><span>${label}</span><strong>${value}</strong><span>${context}</span></div>`;
+}
+
+function drawLineChart(svg, rows, realKey, targetKey) {
+  const width = 720;
+  const height = 280;
+  const pad = 42;
+  const values = rows.flatMap((row) => [realKey === "actualRevenue" ? monthlyPartnerRevenue(row.month) : row[realKey], row[targetKey]]);
+  const max = Math.max(1, ...values);
+  const x = (index) => pad + (index * (width - pad * 2)) / 11;
+  const y = (value) => height - pad - (value / max) * (height - pad * 2);
+  const line = (key) => rows.map((row, index) => {
+    const value = key === "actualRevenue" ? monthlyPartnerRevenue(row.month) : row[key];
+    return `${index ? "L" : "M"} ${x(index)} ${y(value)}`;
+  }).join(" ");
+
+  svg.innerHTML = chartBase(width, height, pad, max) + `
+    <path class="line-target" d="${line(targetKey)}"></path>
+    <path class="line-real" d="${line(realKey)}"></path>
+    ${rows.map((row, index) => `<circle class="dot" cx="${x(index)}" cy="${y(monthlyPartnerRevenue(row.month))}" r="4"></circle>`).join("")}
+    <text class="label" x="${width - 170}" y="24">實際業績</text>
+    <text class="label" x="${width - 88}" y="24">預測目標</text>
+  `;
+}
+
+function drawProfitChart(svg, rows) {
+  const width = 720;
+  const height = 280;
+  const pad = 42;
+  const max = Math.max(1, ...rows.map(calcProfit), ...rows.map((row) => row.agentCount ? monthlyPartnerRevenue(row.month) / row.agentCount : 0));
+  const barWidth = (width - pad * 2) / 12 * 0.58;
+  const y = (value) => height - pad - (value / max) * (height - pad * 2);
+  svg.innerHTML = chartBase(width, height, pad, max) + rows.map((row, index) => {
+    const x = pad + index * ((width - pad * 2) / 12) + 8;
+    const profit = Math.max(0, calcProfit(row));
+    return `<rect class="bar-profit" x="${x}" y="${y(profit)}" width="${barWidth}" height="${height - pad - y(profit)}"></rect>`;
+  }).join("");
+}
+
+function drawGapChart(svg, rows) {
+  const width = 980;
+  const height = 260;
+  const pad = 42;
+  const max = Math.max(1, ...rows.map((row) => Math.abs(monthlyPartnerRevenue(row.month) - row.targetRevenue)));
+  const zeroY = height / 2;
+  const barWidth = (width - pad * 2) / 12 * 0.58;
+  svg.innerHTML = `
+    <line class="axis" x1="${pad}" y1="${zeroY}" x2="${width - pad}" y2="${zeroY}"></line>
+    ${rows.map((row, index) => {
+      const gap = monthlyPartnerRevenue(row.month) - row.targetRevenue;
+      const x = pad + index * ((width - pad * 2) / 12) + 10;
+      const h = Math.abs(gap) / max * (height / 2 - pad);
+      const y = gap >= 0 ? zeroY - h : zeroY;
+      return `<rect class="${gap >= 0 ? "bar-gap-positive" : "bar-gap-negative"}" x="${x}" y="${y}" width="${barWidth}" height="${h}"></rect>
+        <text class="label" x="${x}" y="${height - 12}">${row.month}月</text>`;
+    }).join("")}
+  `;
+}
+
+function chartBase(width, height, pad, max) {
+  return `
+    <line class="axis" x1="${pad}" y1="${height - pad}" x2="${width - pad}" y2="${height - pad}"></line>
+    <line class="axis" x1="${pad}" y1="${pad}" x2="${pad}" y2="${height - pad}"></line>
+    ${[0, .25, .5, .75, 1].map((ratio) => {
+      const y = height - pad - ratio * (height - pad * 2);
+      return `<line class="grid-line" x1="${pad}" y1="${y}" x2="${width - pad}" y2="${y}"></line>
+        <text class="label" x="6" y="${y + 4}">${Math.round(max * ratio)}</text>`;
+    }).join("")}
+    ${monthLabels.map((label, index) => `<text class="label" x="${pad + (index * (width - pad * 2)) / 11 - 10}" y="${height - 12}">${label}</text>`).join("")}
+  `;
+}
+
+function calcProfit(row) {
+  return num(row.closedRevenue) - num(row.fixedCost) - num(row.variableCost);
+}
+
+function rate(actual, target) {
+  if (!target) return actual ? 100 : 0;
+  return Math.round((actual / target) * 100);
+}
+
+function num(value) {
+  return Number(value) || 0;
+}
+
+function money(value) {
+  return (Number(value) || 0).toFixed(2);
+}
+
+function signedMoney(value) {
+  const number = Number(value) || 0;
+  return `${number >= 0 ? "+" : ""}${number.toFixed(2)}`;
+}
+
+function numberFromText(value) {
+  const match = String(value || "").match(/-?\d+(\.\d+)?/);
+  return match ? Number(match[0]) : 0;
+}
+
+function normalizeDate(value) {
+  const text = String(value || "").trim();
+  const match = text.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+  if (!match) return "";
+  return `${match[1]}-${String(match[2]).padStart(2, "0")}-${String(match[3]).padStart(2, "0")}`;
+}
+
+function yearFromText(value) {
+  const match = String(value || "").match(/(20\d{2})/);
+  return match ? Number(match[1]) : 0;
+}
+
+function partnerAdvice(record, achievement, yoyGap) {
+  if (achievement >= 80) return "年度達成率已進入衝刺區，建議聚焦高成交機率客戶與收斡品質。";
+  if (achievement <= 50) return "目前低於 50%，先穩住進案與收斡，每週鎖定 2 到 3 個高影響行動。";
+  if (yoyGap < 0) return "低於去年同期，建議回頭檢查近三個月進案來源與追蹤節奏。";
+  return "進度尚可，建議維持本月業績節奏並增加收斡轉成交。";
+}
+
+function weakestWeeklyType(goals) {
+  const misses = goals.filter((goal) => goal.actual < goal.target);
+  if (!misses.length) return "";
+  const counts = misses.reduce((map, goal) => {
+    map[goal.type] = (map[goal.type] || 0) + 1;
+    return map;
+  }, {});
+  return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
+}
+
+function weeklyStatus(value) {
+  if (value >= 80) return "加碼挑戰";
+  if (value >= 60) return "穩定追蹤";
+  return "需要聚焦";
+}
+
+function weeklyAdvice(value, type) {
+  if (!type) return "尚無明顯卡關項目，建議保持固定回報節奏。";
+  if (value < 60) return `完成率偏低，建議本週先聚焦 ${type}，目標項目不要超過 3 個。`;
+  return `${type} 是近期較容易卡住的項目，建議會議時先討論阻礙與下一步行動。`;
+}
+
+function profitStatus(value) {
+  if (value > 0) return "營運為正";
+  if (value === 0) return "損益兩平";
+  return "需要控管成本";
+}
+
+function isoDate(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function exportOverviewReport() {
+  const rows = annualPartnerRows();
+  const annualTarget = num(state.annualTargets[state.year]);
+  const html = reportHtml("年度總覽", `
+    <h1>${state.year} 年度總覽</h1>
+    <p>年度目標：${money(annualTarget)} 萬元</p>
+    ${els.overviewPartnerTable.innerHTML}
+  `);
+  downloadExcel(`年度總覽-${state.year}.xls`, html);
+}
+
+function exportCompanyReport() {
+  const html = reportHtml("月營運", `
+    <h1>${state.year} 月營運報表</h1>
+    ${els.companyTable.innerHTML}
+  `);
+  downloadExcel(`月營運-${state.year}.xls`, html);
+}
+
+function exportPartnersReport() {
+  const month = Number(els.partnerMonth.value);
+  const rows = partners.map((partnerName) => findPartnerRecord(partnerName, month) || defaultPartnerRecord(partnerName, month));
+  const table = `
+    <table>
+      <thead><tr><th>夥伴</th><th>年度目標</th><th>本月業績</th><th>進案</th><th>收斡</th><th>成交</th><th>年度達成率</th><th>去年同期差</th><th>最近成交</th></tr></thead>
+      <tbody>
+        ${rows.map((record) => {
+          const annualTarget = num(record.annualRevenueTarget) || latestAnnualTarget(record.partnerName);
+          const ytdRevenue = partnerYtdRevenue(record.partnerName, month, state.year);
+          const lastYtdRevenue = partnerYtdRevenue(record.partnerName, month, state.year - 1);
+          return `<tr>
+            <td>${record.partnerName}</td>
+            <td>${money(annualTarget)}</td>
+            <td>${money(record.actualRevenue)}</td>
+            <td>${record.actualListings}</td>
+            <td>${record.actualOffers}</td>
+            <td>${record.actualClosings}</td>
+            <td>${rate(ytdRevenue, annualTarget)}%</td>
+            <td>${signedMoney(ytdRevenue - lastYtdRevenue)}</td>
+            <td>${latestClosingMonth(record.partnerName) || ""}</td>
+          </tr>`;
+        }).join("")}
+      </tbody>
+    </table>
+  `;
+  downloadExcel(`夥伴績效-${state.year}-${month}月.xls`, reportHtml("夥伴績效", `<h1>${state.year} 年 ${month} 月夥伴績效</h1>${table}`));
+}
+
+function exportWeeklyReport() {
+  const rows = state.weekly.filter((goal) => goal.year === state.year);
+  const table = `
+    <table>
+      <thead><tr><th>夥伴</th><th>日期</th><th>項目</th><th>目標</th><th>實際</th><th>是否完成</th><th>來源</th></tr></thead>
+      <tbody>
+        ${rows.map((goal) => `<tr>
+          <td>${goal.partnerName}</td>
+          <td>${goal.meetingDate}</td>
+          <td>${goal.type}</td>
+          <td>${goal.target}</td>
+          <td>${goal.actual}</td>
+          <td>${goal.actual >= goal.target ? "完成" : "未完成"}</td>
+          <td>${goal.source || "manual"}</td>
+        </tr>`).join("")}
+      </tbody>
+    </table>
+  `;
+  downloadExcel(`週目標-${state.year}.xls`, reportHtml("週目標", `<h1>${state.year} 週目標報表</h1>${table}`));
+}
+
+function reportHtml(title, body) {
+  return `
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <xml>
+          <x:ExcelWorkbook xmlns:x="urn:schemas-microsoft-com:office:excel">
+            <x:ExcelWorksheets>
+              <x:ExcelWorksheet>
+                <x:Name>${title}</x:Name>
+                <x:WorksheetOptions>
+                  <x:PageSetup>
+                    <x:Layout x:Orientation="Landscape"/>
+                    <x:PageMargins x:Left="0.25" x:Right="0.25" x:Top="0.45" x:Bottom="0.45"/>
+                  </x:PageSetup>
+                  <x:FitToPage/>
+                  <x:Print>
+                    <x:FitWidth>1</x:FitWidth>
+                    <x:FitHeight>0</x:FitHeight>
+                    <x:ValidPrinterInfo/>
+                    <x:PaperSizeIndex>9</x:PaperSizeIndex>
+                    <x:HorizontalResolution>600</x:HorizontalResolution>
+                    <x:VerticalResolution>600</x:VerticalResolution>
+                  </x:Print>
+                  <x:Selected/>
+                  <x:FreezePanes/>
+                  <x:FrozenNoSplit/>
+                  <x:SplitHorizontal>1</x:SplitHorizontal>
+                  <x:TopRowBottomPane>1</x:TopRowBottomPane>
+                </x:WorksheetOptions>
+              </x:ExcelWorksheet>
+            </x:ExcelWorksheets>
+          </x:ExcelWorkbook>
+        </xml>
+        <style>
+          @page {
+            size: A4 landscape;
+            margin: 0.45cm 0.35cm;
+            mso-page-orientation: landscape;
+          }
+
+          body {
+            font-family: "Microsoft JhengHei", Arial, sans-serif;
+            color: #1e2930;
+            margin: 0;
+          }
+
+          h1 {
+            font-size: 18pt;
+            margin: 0 0 8px;
+            color: #1f4f8f;
+          }
+
+          p {
+            font-size: 10pt;
+            margin: 0 0 8px;
+          }
+
+          table {
+            border-collapse: collapse;
+            width: 100%;
+            table-layout: fixed;
+            mso-table-lspace: 0pt;
+            mso-table-rspace: 0pt;
+          }
+
+          thead {
+            display: table-header-group;
+          }
+
+          tr {
+            page-break-inside: avoid;
+          }
+
+          th,
+          td {
+            border: 1px solid #7d8b94;
+            padding: 5px 6px;
+            font-size: 9pt;
+            vertical-align: middle;
+            text-align: center;
+            mso-number-format:"\\@";
+            word-break: break-word;
+          }
+
+          th {
+            background: #dff1ea;
+            color: #163f32;
+            font-weight: bold;
+          }
+
+          td:first-child,
+          th:first-child {
+            text-align: left;
+          }
+
+          strong {
+            font-weight: bold;
+            color: #1f4f8f;
+          }
+
+          .print-note {
+            color: #647076;
+            font-size: 9pt;
+            margin-bottom: 8px;
+          }
+        </style>
+        <title>${title}</title>
+      </head>
+      <body>
+        <div class="print-note">A4 橫向列印版面，建議列印時選擇「符合頁寬」。</div>
+        ${body}
+      </body>
+    </html>
+  `;
+}
+
+function downloadExcel(filename, html) {
+  const blob = new Blob(["\ufeff", html], { type: "application/vnd.ms-excel;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}

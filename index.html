@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>大湳店業務行政系統</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="app-header">
+      <div>
+        <p class="eyebrow">店務營運後台</p>
+        <h1>太平洋房屋 友成大湳店 業務行政系統</h1>
+      </div>
+      <div class="year-picker">
+        <label for="yearSelect">年度</label>
+        <select id="yearSelect"></select>
+      </div>
+    </header>
+
+    <nav class="tabs" aria-label="主要頁面">
+      <button class="tab active" type="button" data-view="overview">年度總覽</button>
+      <button class="tab" type="button" data-view="company">月營運</button>
+      <button class="tab" type="button" data-view="partners">夥伴績效</button>
+      <button class="tab" type="button" data-view="weekly">週目標</button>
+    </nav>
+
+    <section id="overview" class="view active">
+      <section class="annual-target-panel">
+        <label>
+          年度目標（萬元）
+          <input id="annualTargetInput" type="number" min="0" step="0.01">
+        </label>
+        <div class="annual-target-display">
+          <span>年度目標</span>
+          <strong id="annualTargetDisplay">0萬</strong>
+        </div>
+      </section>
+      <div class="kpi-grid" id="overviewKpis"></div>
+      <section class="chart-panel">
+        <div class="section-head">
+          <h2>年度營運狀態</h2>
+          <p>業績、關帳業績、盈餘、人效與預測目標差距</p>
+          <button id="exportOverviewBtn" type="button">匯出年度總覽</button>
+        </div>
+        <div class="chart-grid">
+          <div class="chart-box">
+            <h3>每月業績 vs 預測目標</h3>
+            <svg id="revenueChart" viewBox="0 0 720 280" role="img" aria-label="每月業績與預測目標折線圖"></svg>
+          </div>
+          <div class="chart-box">
+            <h3>盈餘與人效</h3>
+            <svg id="profitChart" viewBox="0 0 720 280" role="img" aria-label="每月盈餘與人效圖"></svg>
+          </div>
+          <div class="chart-box wide">
+            <h3>目標差距</h3>
+            <svg id="gapChart" viewBox="0 0 980 260" role="img" aria-label="每月實際業績與預測目標差距"></svg>
+          </div>
+        </div>
+      </section>
+      <section class="chart-panel">
+        <div class="section-head">
+          <h2>業務年度業績表</h2>
+          <p>每位業務每月業績與年度總和，依年度總業績排序。</p>
+        </div>
+        <div id="overviewPartnerTable" class="table-wrap"></div>
+      </section>
+    </section>
+
+    <section id="company" class="view">
+      <div class="section-head">
+        <h2>公司月營運資料</h2>
+        <p>實際業績由夥伴績效自動加總；盈餘 = 關帳業績 - 固定成本 - 變動成本。</p>
+        <button id="exportCompanyBtn" type="button">匯出月營運</button>
+      </div>
+      <div id="companyTable" class="table-wrap"></div>
+    </section>
+
+    <section id="partners" class="view">
+      <div class="section-head">
+        <h2>夥伴月績效分析</h2>
+        <p>輸入每位夥伴本月業績、進案、收斡與成交件數，系統自動連動月營運。</p>
+        <button id="exportPartnersBtn" type="button">匯出夥伴績效</button>
+      </div>
+      <div class="import-panel">
+        <label>
+          匯入夥伴績效 Excel
+          <input id="partnerImportFile" type="file" accept=".xls,.xlsx,.html,.csv">
+        </label>
+        <span id="partnerImportStatus">尚未匯入</span>
+      </div>
+      <div class="toolbar">
+        <label>
+          月份
+          <select id="partnerMonth"></select>
+        </label>
+        <label>
+          夥伴
+          <select id="partnerName"></select>
+        </label>
+      </div>
+      <form id="partnerForm" class="entry-panel partner-form">
+        <label>年度業績目標（萬元）<input id="annualRevenueTarget" type="number" min="0" step="0.01"></label>
+        <label>本月業績（萬元）<input id="actualRevenue" type="number" min="0" step="0.01"></label>
+        <label>進案<input id="actualListings" type="number" min="0" step="1"></label>
+        <label>收斡<input id="actualOffers" type="number" min="0" step="1"></label>
+        <label>成交件數<input id="actualClosings" type="number" min="0" step="1"></label>
+        <button class="primary" type="submit">儲存夥伴績效</button>
+      </form>
+      <div id="partnerCards" class="partner-grid"></div>
+    </section>
+
+    <section id="weekly" class="view">
+      <div class="section-head">
+        <h2>週目標統計與建議</h2>
+        <p>可手動輸入，也可匯入前面小目標網站匯出的 Excel 月底統計表。</p>
+        <button id="exportWeeklyBtn" type="button">匯出週目標</button>
+      </div>
+      <div class="import-panel">
+        <label>
+          匯入小目標 Excel
+          <input id="weeklyImportFile" type="file" accept=".xls,.xlsx,.html,.csv">
+        </label>
+        <span id="importStatus">尚未匯入</span>
+      </div>
+      <form id="weeklyForm" class="entry-panel weekly-form">
+        <label>會議日期<input id="weeklyDate" type="date"></label>
+        <label>夥伴<select id="weeklyPartner"></select></label>
+        <label>項目<select id="weeklyType"></select></label>
+        <label>目標<input id="weeklyTarget" type="number" min="1" value="1"></label>
+        <label>實際<input id="weeklyActual" type="number" min="0" value="0"></label>
+        <button class="primary" type="submit">新增週目標</button>
+      </form>
+      <div id="weeklyBoard" class="weekly-grid"></div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
