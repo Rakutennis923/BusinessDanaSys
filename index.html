@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>大湳店業務行政系統</title>
+  <title>太平洋房屋 友成大湳店 業務行政系統</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -11,7 +11,11 @@
     <header class="app-header">
       <div>
         <p class="eyebrow">店務營運後台</p>
-        <h1>太平洋房屋 友成大湳店 業務行政系統</h1>
+        <h1 class="brand-title">
+          <span class="brand-title-main">太平洋房屋</span>
+          <span class="brand-title-sub">友成大湳店</span>
+          <span class="brand-title-sub">業務行政系統</span>
+        </h1>
       </div>
       <div class="year-picker">
         <label for="yearSelect">年度</label>
@@ -65,6 +69,7 @@
           <p>每位業務每月業績與年度總和，依年度總業績排序。</p>
         </div>
         <div id="overviewPartnerTable" class="table-wrap"></div>
+        <div id="overviewPartnerDetail" class="table-wrap compact-only"></div>
       </section>
     </section>
 
@@ -73,6 +78,12 @@
         <h2>公司月營運資料</h2>
         <p>實際業績由夥伴績效自動加總；盈餘 = 關帳業績 - 固定成本 - 變動成本。</p>
         <button id="exportCompanyBtn" type="button">匯出月營運</button>
+      </div>
+      <div class="toolbar compact-only">
+        <label>
+          選擇月份
+          <select id="companyMonthSelect"></select>
+        </label>
       </div>
       <div id="companyTable" class="table-wrap"></div>
     </section>
@@ -132,6 +143,12 @@
         <label>實際<input id="weeklyActual" type="number" min="0" value="0"></label>
         <button class="primary" type="submit">新增週目標</button>
       </form>
+      <div class="toolbar compact-only">
+        <label>
+          選擇夥伴
+          <select id="weeklyFilterPartner"></select>
+        </label>
+      </div>
       <div id="weeklyBoard" class="weekly-grid"></div>
     </section>
   </main>

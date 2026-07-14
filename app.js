@@ -19,11 +19,13 @@ const els = {
   annualTargetDisplay: document.querySelector("#annualTargetDisplay"),
   overviewKpis: document.querySelector("#overviewKpis"),
   overviewPartnerTable: document.querySelector("#overviewPartnerTable"),
+  overviewPartnerDetail: document.querySelector("#overviewPartnerDetail"),
   exportOverviewBtn: document.querySelector("#exportOverviewBtn"),
   revenueChart: document.querySelector("#revenueChart"),
   profitChart: document.querySelector("#profitChart"),
   gapChart: document.querySelector("#gapChart"),
   companyTable: document.querySelector("#companyTable"),
+  companyMonthSelect: document.querySelector("#companyMonthSelect"),
   exportCompanyBtn: document.querySelector("#exportCompanyBtn"),
   partnerMonth: document.querySelector("#partnerMonth"),
   partnerName: document.querySelector("#partnerName"),
@@ -45,6 +47,7 @@ const els = {
   weeklyType: document.querySelector("#weeklyType"),
   weeklyTarget: document.querySelector("#weeklyTarget"),
   weeklyActual: document.querySelector("#weeklyActual"),
+  weeklyFilterPartner: document.querySelector("#weeklyFilterPartner"),
   weeklyBoard: document.querySelector("#weeklyBoard")
   , exportWeeklyBtn: document.querySelector("#exportWeeklyBtn")
 };
@@ -120,8 +123,13 @@ function setupSelects() {
   els.yearSelect.innerHTML = Array.from({ length: currentYear - 2020 + 2 }, (_, index) => 2020 + index)
     .map((year) => `<option ${year === state.year ? "selected" : ""}>${year}</option>`).join("");
   els.partnerMonth.innerHTML = monthLabels.map((label, i) => `<option value="${i + 1}">${label}</option>`).join("");
+  if (els.companyMonthSelect) {
+    els.companyMonthSelect.innerHTML = monthLabels.map((label, i) => `<option value="${i + 1}">${label}</option>`).join("");
+    els.companyMonthSelect.value = String(new Date().getMonth() + 1);
+  }
   els.partnerName.innerHTML = partners.map((name) => `<option>${name}</option>`).join("");
   els.weeklyPartner.innerHTML = partners.map((name) => `<option>${name}</option>`).join("");
+  if (els.weeklyFilterPartner) els.weeklyFilterPartner.innerHTML = partners.map((name) => `<option>${name}</option>`).join("");
   els.weeklyType.innerHTML = goalTypes.map((type) => `<option>${type}</option>`).join("");
   els.weeklyDate.value = isoDate(new Date());
 }
@@ -149,7 +157,11 @@ function bindEvents() {
     fillPartnerForm();
     renderPartners();
   });
-  els.partnerName.addEventListener("change", fillPartnerForm);
+  if (els.companyMonthSelect) els.companyMonthSelect.addEventListener("change", renderCompanyTable);
+  els.partnerName.addEventListener("change", () => {
+    fillPartnerForm();
+    renderPartners();
+  });
   els.partnerForm.addEventListener("submit", savePartnerRecord);
   els.partnerImportFile.addEventListener("change", importPartnerExcel);
   els.weeklyForm.addEventListener("submit", saveWeeklyGoal);
@@ -158,6 +170,13 @@ function bindEvents() {
   els.exportCompanyBtn.addEventListener("click", exportCompanyReport);
   els.exportPartnersBtn.addEventListener("click", exportPartnersReport);
   els.exportWeeklyBtn.addEventListener("click", exportWeeklyReport);
+  if (els.weeklyFilterPartner) els.weeklyFilterPartner.addEventListener("change", renderWeekly);
+  window.addEventListener("resize", () => {
+    renderCompanyTable();
+    renderOverviewPartnerTable();
+    renderPartners();
+    renderWeekly();
+  });
 }
 
 function saveState() {
@@ -250,6 +269,10 @@ function switchView(viewId) {
   document.querySelectorAll(".view").forEach((view) => view.classList.toggle("active", view.id === viewId));
 }
 
+function isCompactView() {
+  return window.matchMedia("(max-width: 900px)").matches;
+}
+
 function companyRows() {
   return state.company.filter((row) => row.year === state.year).sort((a, b) => a.month - b.month);
 }
@@ -312,7 +335,9 @@ function kpi(label, value, context) {
 }
 
 function renderCompanyTable() {
-  const rows = companyRows();
+  const rows = isCompactView() && els.companyMonthSelect
+    ? companyRows().filter((row) => row.month === Number(els.companyMonthSelect.value))
+    : companyRows();
   els.companyTable.innerHTML = `
     <table>
       <thead>
@@ -336,6 +361,58 @@ function renderCompanyTable() {
 
 function renderOverviewPartnerTable() {
   const rows = annualPartnerRows();
+  if (isCompactView()) {
+    const selected = window.selectedOverviewPartner || rows[0]?.partnerName || partners[0];
+    window.selectedOverviewPartner = selected;
+
+    els.overviewPartnerTable.innerHTML = `
+      <table class="rank-table">
+        <thead>
+          <tr>
+            <th>排名</th><th>夥伴</th><th>年度總業績</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map((row, index) => `
+            <tr>
+              <td data-label="排名">${index + 1}</td>
+              <td data-label="夥伴"><button class="link-button" type="button" data-overview-partner="${row.partnerName}">${row.partnerName}</button></td>
+              <td data-label="年度總業績"><strong>${money(row.total)}萬</strong></td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    `;
+
+    const detail = rows.find((row) => row.partnerName === selected) || rows[0];
+    els.overviewPartnerDetail.innerHTML = detail ? `
+      <table>
+        <thead>
+          <tr>
+            <th>${detail.partnerName}</th><th>業績</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${detail.months.map((value, index) => `
+            <tr>
+              <td data-label="月份">${index + 1}月</td>
+              <td data-label="業績"><strong>${money(value)}萬</strong></td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    ` : "";
+
+    els.overviewPartnerTable.querySelectorAll("[data-overview-partner]").forEach((button) => {
+      button.addEventListener("click", () => {
+        window.selectedOverviewPartner = button.dataset.overviewPartner;
+        renderOverviewPartnerTable();
+      });
+    });
+    return;
+  }
+
+  if (els.overviewPartnerDetail) els.overviewPartnerDetail.innerHTML = "";
   els.overviewPartnerTable.innerHTML = `
     <table>
       <thead>
@@ -517,7 +594,8 @@ function upsertPartnerRecords(records) {
 
 function renderPartners() {
   const month = Number(els.partnerMonth.value);
-  const rows = partners.map((name) => findPartnerRecord(name, month) || defaultPartnerRecord(name, month));
+  const visiblePartners = isCompactView() ? [els.partnerName.value] : partners;
+  const rows = visiblePartners.map((name) => findPartnerRecord(name, month) || defaultPartnerRecord(name, month));
   els.partnerCards.innerHTML = rows.map((record) => partnerCardHtml(record, month)).join("");
 }
 
@@ -644,7 +722,8 @@ function renderWeekly() {
     return map;
   }, {});
 
-  els.weeklyBoard.innerHTML = partners.map((name) => weeklyCardHtml(name, grouped[name] || [])).join("");
+  const visiblePartners = isCompactView() && els.weeklyFilterPartner ? [els.weeklyFilterPartner.value] : partners;
+  els.weeklyBoard.innerHTML = visiblePartners.map((name) => weeklyCardHtml(name, grouped[name] || [])).join("");
 }
 
 function weeklyCardHtml(name, goals) {

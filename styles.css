@@ -49,6 +49,35 @@ h1 { margin-bottom: 0; font-size: clamp(28px, 4vw, 46px); }
 h2 { margin-bottom: 8px; font-size: 24px; }
 h3 { margin-bottom: 10px; font-size: 17px; }
 
+.brand-title {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  line-height: 1.08;
+}
+
+.brand-title-main {
+  display: block;
+  color: var(--ink);
+  font-size: clamp(32px, 4.4vw, 52px);
+  font-weight: 900;
+}
+
+.brand-title-sub {
+  display: inline-block;
+  width: fit-content;
+  max-width: 100%;
+  background: linear-gradient(135deg, #173f52, #1f7a5f);
+  color: #f7fbf8;
+  border: 1px solid rgba(255, 255, 255, .25);
+  border-radius: 8px;
+  padding: 7px 12px 8px;
+  font-size: clamp(24px, 3.2vw, 38px);
+  font-weight: 900;
+  letter-spacing: 0;
+  box-shadow: 0 8px 20px rgba(23, 63, 82, .12);
+}
+
 label {
   display: grid;
   gap: 6px;
@@ -331,6 +360,18 @@ td input { min-width: 92px; }
 .status-watch { color: var(--amber); }
 .status-risk { color: var(--red); }
 
+.compact-only { display: none; }
+
+.link-button {
+  min-height: 0;
+  border: 0;
+  background: transparent;
+  color: var(--blue);
+  padding: 0;
+  text-align: left;
+  text-decoration: underline;
+}
+
 @media (max-width: 1080px) {
   .kpi-grid, .partner-grid, .weekly-grid, .chart-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -373,6 +414,54 @@ td input { min-width: 92px; }
   .annual-target-panel {
     width: 100%;
   }
+
+  .compact-only {
+    display: grid;
+  }
+
+  .table-wrap {
+    border: 0;
+    background: transparent;
+    overflow: visible;
+  }
+
+  table, thead, tbody, tr, td {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+
+  thead { display: none; }
+
+  tr {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-bottom: 10px;
+  }
+
+  td {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+    padding: 9px 0;
+    text-align: right;
+  }
+
+  td::before {
+    content: attr(data-label);
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 800;
+    text-align: left;
+  }
+
+  td input {
+    width: 128px;
+    min-width: 0;
+  }
 }
 
 @media (max-width: 640px) {
@@ -386,6 +475,20 @@ td input { min-width: 92px; }
 
   h1 {
     font-size: 28px;
+  }
+
+  .brand-title {
+    gap: 9px;
+    margin-top: 4px;
+  }
+
+  .brand-title-main {
+    font-size: clamp(42px, 12vw, 58px);
+  }
+
+  .brand-title-sub {
+    font-size: clamp(28px, 7.8vw, 38px);
+    padding: 8px 12px 9px;
   }
 
   .tabs {
