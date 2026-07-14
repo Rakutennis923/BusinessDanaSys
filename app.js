@@ -532,7 +532,10 @@ function renderCompanyTable() {
           <th>月份</th><th>預測業績</th><th>實際業績</th><th>關帳業績</th><th>人數</th><th>固定成本</th><th>變動成本</th><th>盈餘</th><th>人效</th><th>差距</th><th>成交</th>
         </tr>
       </thead>
-      <tbody>${rows.map(companyRowHtml).join("")}</tbody>
+      <tbody>
+        ${rows.map(companyRowHtml).join("")}
+        ${companyTotalRowHtml(rows)}
+      </tbody>
     </table>
   `;
 
@@ -654,6 +657,50 @@ function companyRowHtml(row) {
       <td data-label="人效">${money(efficiency)}萬</td>
       <td data-label="差距" class="${gap >= 0 ? "status-good" : "status-risk"}">${signedMoney(gap)}萬</td>
       <td data-label="成交件數"><strong>${closings}件</strong></td>
+    </tr>
+  `;
+}
+
+function companyTotalRowHtml(rows) {
+  const total = rows.reduce((sum, row) => {
+    const actualRevenue = monthlyPartnerRevenue(row.month);
+    const agentCount = monthlyAgentCount(row.month);
+    sum.targetRevenue += num(row.targetRevenue);
+    sum.actualRevenue += actualRevenue;
+    sum.closedRevenue += num(row.closedRevenue);
+    sum.agentCount += agentCount;
+    sum.fixedCost += num(row.fixedCost);
+    sum.variableCost += num(row.variableCost);
+    sum.profit += calcProfit(row);
+    sum.gap += actualRevenue - num(row.targetRevenue);
+    sum.closings += monthlyPartnerClosings(row.month);
+    return sum;
+  }, {
+    targetRevenue: 0,
+    actualRevenue: 0,
+    closedRevenue: 0,
+    agentCount: 0,
+    fixedCost: 0,
+    variableCost: 0,
+    profit: 0,
+    gap: 0,
+    closings: 0
+  });
+  const efficiency = total.agentCount ? total.actualRevenue / total.agentCount : 0;
+
+  return `
+    <tr class="total-row">
+      <td data-label="月份"><strong>總計</strong></td>
+      <td data-label="預測業績"><strong>${money(total.targetRevenue)}萬</strong></td>
+      <td data-label="實際業績"><strong>${money(total.actualRevenue)}萬</strong></td>
+      <td data-label="關帳業績"><strong>${money(total.closedRevenue)}萬</strong></td>
+      <td data-label="人數"><strong>-</strong></td>
+      <td data-label="固定成本"><strong>${money(total.fixedCost)}萬</strong></td>
+      <td data-label="變動成本"><strong>${money(total.variableCost)}萬</strong></td>
+      <td data-label="盈餘"><strong>${money(total.profit)}萬</strong></td>
+      <td data-label="人效"><strong>${money(efficiency)}萬</strong></td>
+      <td data-label="差距" class="${total.gap >= 0 ? "status-good" : "status-risk"}"><strong>${signedMoney(total.gap)}萬</strong></td>
+      <td data-label="成交"><strong>${total.closings}件</strong></td>
     </tr>
   `;
 }
