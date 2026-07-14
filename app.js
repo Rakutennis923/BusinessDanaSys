@@ -1,4 +1,4 @@
-const STORAGE_KEY = "danan-business-admin-v2";
+﻿const STORAGE_KEY = "danan-business-admin-v2";
 const CLOUD_API_URL = "https://script.google.com/macros/s/AKfycby_YVfqeWsBQlHtkd1d5tILCXz3qTcIL7uAmlRI1K2Kp8xjVvxHTU7Jupw8O0nHUinz/exec";
 let cloudSyncTimer = null;
 
@@ -101,11 +101,18 @@ function normalizeState(raw) {
   return {
     year: raw.year || new Date().getFullYear(),
     annualTargets: raw.annualTargets || { [raw.year || new Date().getFullYear()]: 6000 },
-    company: (raw.company || []).map((row) => ({
-      closedRevenue: Number(row.closedRevenue) || Number(row.actualRevenue) || 0,
-      ...row,
-      actualRevenue: Number(row.actualRevenue) || 0
-    })),
+    company: (raw.company || []).map((row) => {
+      const closedRevenue = Number(row.closedRevenue) || Number(row.actualRevenue) || 0;
+      const profit = row.profit !== undefined
+        ? Number(row.profit) || 0
+        : closedRevenue - (Number(row.fixedCost) || 0) - (Number(row.variableCost) || 0);
+      return {
+        ...row,
+        closedRevenue,
+        actualRevenue: Number(row.actualRevenue) || 0,
+        profit
+      };
+    }),
     people,
     partners: partnerRows.map((record) => normalizePartnerRecord(record, people)),
     weekly: weeklyRows.map((goal) => normalizeWeeklyGoal(goal, people))
@@ -248,8 +255,7 @@ function seedCompany(year) {
     targetRevenue: [320, 340, 360, 380, 420, 450, 470, 480, 500, 520, 540, 560][i],
     closedRevenue: [260, 330, 310, 390, 360, 440, 0, 0, 0, 0, 0, 0][i],
     agentCount: 22,
-    fixedCost: 120,
-    variableCost: [40, 50, 44, 58, 52, 66, 0, 0, 0, 0, 0, 0][i],
+    profit: [100, 160, 146, 212, 188, 254, 0, 0, 0, 0, 0, 0][i],
     closedDeals: [3, 4, 3, 5, 4, 5, 0, 0, 0, 0, 0, 0][i]
   }));
 }
@@ -475,10 +481,6 @@ function monthlyAgentCount(month) {
   return names.size || activePeople().length;
 }
 
-function annualCost() {
-  return companyRows().reduce((sum, row) => sum + num(row.fixedCost) + num(row.variableCost), 0);
-}
-
 function renderOverview() {
   const rows = companyRows();
   const annualTarget = num(state.annualTargets[state.year]);
@@ -504,11 +506,10 @@ function renderOverview() {
   const gap = totals.revenue - annualTarget;
 
   els.overviewKpis.innerHTML = [
-    kpi("年度累積業績", `${money(totals.revenue)}萬`, `年度達成率 ${achievement}%`),
-    kpi("年度關帳業績", `${money(totals.closedRevenue)}萬`, "盈餘以此計算"),
+    kpi("年度累積業績", `${money(totals.revenue)}萬`, `年度達成 ${achievement}%`),
+    kpi("年度關帳業績", `${money(totals.closedRevenue)}萬`, "依月營運關帳業績累計"),
     kpi("年度總盈餘", `${money(totals.profit)}萬`, profitStatus(totals.profit)),
-    kpi("年度成本", `${money(annualCost())}萬`, "固定成本 + 變動成本"),
-    kpi("目標差距", `${signedMoney(gap)}萬`, gap >= 0 ? "超前年度目標" : "落後年度目標")
+    kpi("目標差距", `${signedMoney(gap)}萬`, gap >= 0 ? "已超過年度目標" : "尚未達年度目標")
   ].join("");
 
   drawLineChart(els.revenueChart, rows, "actualRevenue", "targetRevenue");
@@ -529,7 +530,7 @@ function renderCompanyTable() {
     <table>
       <thead>
         <tr>
-          <th>月份</th><th>預測業績</th><th>實際業績</th><th>關帳業績</th><th>人數</th><th>固定成本</th><th>變動成本</th><th>盈餘</th><th>人效</th><th>差距</th><th>成交</th>
+          <th>月份</th><th>預測業績</th><th>實際業績</th><th>關帳業績</th><th>人數</th><th>盈餘</th><th>人效</th><th>差距</th><th>成交</th>
         </tr>
       </thead>
       <tbody>
@@ -548,7 +549,6 @@ function renderCompanyTable() {
     });
   });
 }
-
 function renderOverviewPartnerTable() {
   const rows = annualPartnerRows();
   if (isCompactView()) {
@@ -660,12 +660,10 @@ function companyRowHtml(row) {
       <td data-label="實際業績"><strong>${money(actualRevenue)}萬</strong></td>
       ${inputCell(row, "closedRevenue", "關帳業績")}
       <td data-label="人數"><strong>${agentCount}</strong></td>
-      ${inputCell(row, "fixedCost", "固定成本")}
-      ${inputCell(row, "variableCost", "變動成本")}
-      <td data-label="盈餘">${money(profit)}萬</td>
+      ${inputCell(row, "profit", "盈餘")}
       <td data-label="人效">${money(efficiency)}萬</td>
       <td data-label="差距" class="${gap >= 0 ? "status-good" : "status-risk"}">${signedMoney(gap)}萬</td>
-      <td data-label="成交件數"><strong>${closings}件</strong></td>
+      <td data-label="成交"><strong>${closings}件</strong></td>
     </tr>
   `;
 }
@@ -678,8 +676,6 @@ function companyTotalRowHtml(rows) {
     sum.actualRevenue += actualRevenue;
     sum.closedRevenue += num(row.closedRevenue);
     sum.agentCount += agentCount;
-    sum.fixedCost += num(row.fixedCost);
-    sum.variableCost += num(row.variableCost);
     sum.profit += calcProfit(row);
     sum.gap += actualRevenue - num(row.targetRevenue);
     sum.closings += monthlyPartnerClosings(row.month);
@@ -689,8 +685,6 @@ function companyTotalRowHtml(rows) {
     actualRevenue: 0,
     closedRevenue: 0,
     agentCount: 0,
-    fixedCost: 0,
-    variableCost: 0,
     profit: 0,
     gap: 0,
     closings: 0
@@ -699,13 +693,11 @@ function companyTotalRowHtml(rows) {
 
   return `
     <tr class="total-row">
-      <td data-label="月份"><strong>總計</strong></td>
+      <td data-label="月份"><strong>合計</strong></td>
       <td data-label="預測業績"><strong>${money(total.targetRevenue)}萬</strong></td>
       <td data-label="實際業績"><strong>${money(total.actualRevenue)}萬</strong></td>
       <td data-label="關帳業績"><strong>${money(total.closedRevenue)}萬</strong></td>
       <td data-label="人數"><strong>-</strong></td>
-      <td data-label="固定成本"><strong>${money(total.fixedCost)}萬</strong></td>
-      <td data-label="變動成本"><strong>${money(total.variableCost)}萬</strong></td>
       <td data-label="盈餘"><strong>${money(total.profit)}萬</strong></td>
       <td data-label="人效"><strong>${money(efficiency)}萬</strong></td>
       <td data-label="差距" class="${total.gap >= 0 ? "status-good" : "status-risk"}"><strong>${signedMoney(total.gap)}萬</strong></td>
@@ -715,11 +707,11 @@ function companyTotalRowHtml(rows) {
 }
 
 function inputCell(row, field, label) {
-  const step = ["targetRevenue", "closedRevenue", "fixedCost", "variableCost"].includes(field) ? "0.01" : "1";
-  const value = ["targetRevenue", "closedRevenue", "fixedCost", "variableCost"].includes(field) ? money(row[field] || 0) : row[field] || 0;
+  const amountFields = ["targetRevenue", "closedRevenue", "profit"];
+  const step = amountFields.includes(field) ? "0.01" : "1";
+  const value = amountFields.includes(field) ? money(row[field] || 0) : row[field] || 0;
   return `<td data-label="${label}"><input type="number" min="0" step="${step}" data-month="${row.month}" data-field="${field}" value="${value}"></td>`;
 }
-
 function fillPartnerForm() {
   if (!els.partnerName.value) return;
   const record = findPartnerRecord();
@@ -1258,7 +1250,7 @@ function chartBase(width, height, pad, max) {
 }
 
 function calcProfit(row) {
-  return num(row.closedRevenue) - num(row.fixedCost) - num(row.variableCost);
+  return num(row.profit);
 }
 
 function rate(actual, target) {
@@ -1539,3 +1531,5 @@ function downloadExcel(filename, html) {
   link.click();
   URL.revokeObjectURL(url);
 }
+
+
