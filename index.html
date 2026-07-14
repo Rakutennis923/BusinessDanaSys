@@ -86,6 +86,13 @@
           <select id="companyMonthSelect"></select>
         </label>
       </div>
+      <div class="import-panel">
+        <label>
+          匯入月營運 Excel
+          <input id="companyImportFile" type="file" accept=".xlsx,.xls,.html,.csv">
+        </label>
+        <span id="companyImportStatus">尚未匯入</span>
+      </div>
       <div id="companyTable" class="table-wrap"></div>
     </section>
 
@@ -210,6 +217,7 @@
     </form>
   </dialog>
 
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

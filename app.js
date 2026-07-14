@@ -26,6 +26,8 @@ const els = {
   gapChart: document.querySelector("#gapChart"),
   companyTable: document.querySelector("#companyTable"),
   companyMonthSelect: document.querySelector("#companyMonthSelect"),
+  companyImportFile: document.querySelector("#companyImportFile"),
+  companyImportStatus: document.querySelector("#companyImportStatus"),
   exportCompanyBtn: document.querySelector("#exportCompanyBtn"),
   partnerMonth: document.querySelector("#partnerMonth"),
   partnerName: document.querySelector("#partnerName"),
@@ -339,6 +341,7 @@ function bindEvents() {
     renderPartners();
   });
   if (els.companyMonthSelect) els.companyMonthSelect.addEventListener("change", renderCompanyTable);
+  if (els.companyImportFile) els.companyImportFile.addEventListener("change", importCompanyExcel);
   els.partnerName.addEventListener("change", () => {
     fillPartnerForm();
     renderPartners();
@@ -427,7 +430,7 @@ function isCloudStateEmpty(cloudState) {
 }
 
 function setSyncStatus(message) {
-  [els.partnerImportStatus, els.importStatus].forEach((target) => {
+  [els.companyImportStatus, els.partnerImportStatus, els.importStatus].forEach((target) => {
     if (target) target.textContent = message;
   });
 }
@@ -796,6 +799,101 @@ function parseTabularText(text) {
   return text.split(/\r?\n/)
     .map((line) => line.split(line.includes("\t") ? "\t" : ",").map((cell) => cell.trim()))
     .filter((row) => row.some(Boolean));
+}
+
+function importCompanyExcel(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const isWorkbookFile = /\.(xlsx|xls)$/i.test(file.name);
+  const useWorkbookParser = isWorkbookFile && window.XLSX;
+  if (isWorkbookFile && !window.XLSX) {
+    if (els.companyImportStatus) els.companyImportStatus.textContent = "Excel 解析套件尚未載入，請確認網路後重新整理";
+    els.companyImportFile.value = "";
+    return;
+  }
+  const reader = new FileReader();
+
+  reader.onload = () => {
+    try {
+      const rows = useWorkbookParser
+        ? rowsFromWorkbook(reader.result)
+        : parseTabularText(String(reader.result || ""));
+      const imported = parseCompanyExcel(rows);
+      upsertCompanyRecords(imported);
+      state.company = ensureCompanyYear(state.year);
+      saveState();
+      render();
+      if (els.companyImportStatus) els.companyImportStatus.textContent = `已匯入 ${imported.length} 筆月營運資料`;
+    } catch (error) {
+      console.warn(error);
+      if (els.companyImportStatus) els.companyImportStatus.textContent = "匯入失敗，請確認檔案欄位格式";
+    } finally {
+      els.companyImportFile.value = "";
+    }
+  };
+
+  if (useWorkbookParser) {
+    reader.readAsArrayBuffer(file);
+  } else {
+    reader.readAsText(file, "utf-8");
+  }
+}
+
+function rowsFromWorkbook(arrayBuffer) {
+  const workbook = XLSX.read(arrayBuffer, { type: "array" });
+  const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+  return XLSX.utils.sheet_to_json(firstSheet, { header: 1, raw: false, defval: "" });
+}
+
+function parseCompanyExcel(rows) {
+  const headerIndex = rows.findIndex((row) => row.some((cell) => /year|年度|西元年|民國年/i.test(String(cell))));
+  if (headerIndex < 0) return [];
+
+  const headers = rows[headerIndex].map(normalizeHeader);
+  return rows.slice(headerIndex + 1)
+    .map((row) => companyRecordFromRow(headers, row))
+    .filter((record) => record.year && record.month >= 1 && record.month <= 12);
+}
+
+function companyRecordFromRow(headers, row) {
+  const get = (...names) => {
+    const normalizedNames = names.map(normalizeHeader);
+    const index = headers.findIndex((header) => normalizedNames.some((name) => header.includes(name)));
+    return index >= 0 ? row[index] : "";
+  };
+
+  const rocYear = numberFromText(get("民國年"));
+  const year = numberFromText(get("year", "西元年", "年度", "年份")) || (rocYear ? rocYear + 1911 : state.year);
+  const month = numberFromText(get("month", "月份", "月"));
+
+  return {
+    year,
+    month,
+    targetRevenue: numberFromText(get("targetRevenue", "預測業績", "目標業績")),
+    closedRevenue: numberFromText(get("closedRevenue", "關帳業績", "業績")),
+    agentCount: numberFromText(get("agentCount", "人數")),
+    profit: numberFromText(get("profit", "盈餘"))
+  };
+}
+
+function upsertCompanyRecords(records) {
+  records.forEach((record) => {
+    let existing = state.company.find((row) => row.year === record.year && row.month === record.month);
+    if (!existing) {
+      existing = {
+        year: record.year,
+        month: record.month,
+        targetRevenue: 0,
+        closedRevenue: 0,
+        agentCount: 0,
+        profit: 0
+      };
+      state.company.push(existing);
+    }
+
+    Object.assign(existing, record);
+  });
 }
 
 function normalizeHeader(header) {
