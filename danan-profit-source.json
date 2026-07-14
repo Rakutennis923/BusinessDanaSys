@@ -1,0 +1,590 @@
+﻿[
+    {
+        "rocYear":  109,
+        "year":  2020,
+        "month":  1,
+        "closedRevenueRaw":  3910750,
+        "profitRaw":  667005
+    },
+    {
+        "rocYear":  109,
+        "year":  2020,
+        "month":  2,
+        "closedRevenueRaw":  1331100,
+        "profitRaw":  -32500
+    },
+    {
+        "rocYear":  109,
+        "year":  2020,
+        "month":  3,
+        "closedRevenueRaw":  3785350,
+        "profitRaw":  560195
+    },
+    {
+        "rocYear":  109,
+        "year":  2020,
+        "month":  4,
+        "closedRevenueRaw":  1757850,
+        "profitRaw":  136988
+    },
+    {
+        "rocYear":  109,
+        "year":  2020,
+        "month":  5,
+        "closedRevenueRaw":  1187300,
+        "profitRaw":  -5166
+    },
+    {
+        "rocYear":  109,
+        "year":  2020,
+        "month":  6,
+        "closedRevenueRaw":  4353030,
+        "profitRaw":  631025
+    },
+    {
+        "rocYear":  109,
+        "year":  2020,
+        "month":  7,
+        "closedRevenueRaw":  3645250,
+        "profitRaw":  502819
+    },
+    {
+        "rocYear":  109,
+        "year":  2020,
+        "month":  8,
+        "closedRevenueRaw":  2817902,
+        "profitRaw":  364355
+    },
+    {
+        "rocYear":  109,
+        "year":  2020,
+        "month":  9,
+        "closedRevenueRaw":  3030400,
+        "profitRaw":  273694
+    },
+    {
+        "rocYear":  109,
+        "year":  2020,
+        "month":  10,
+        "closedRevenueRaw":  9662044,
+        "profitRaw":  1937461
+    },
+    {
+        "rocYear":  109,
+        "year":  2020,
+        "month":  11,
+        "closedRevenueRaw":  5369672,
+        "profitRaw":  869145
+    },
+    {
+        "rocYear":  109,
+        "year":  2020,
+        "month":  12,
+        "closedRevenueRaw":  4781000,
+        "profitRaw":  516869
+    },
+    {
+        "rocYear":  110,
+        "year":  2021,
+        "month":  1,
+        "closedRevenueRaw":  3654165,
+        "profitRaw":  393946
+    },
+    {
+        "rocYear":  110,
+        "year":  2021,
+        "month":  2,
+        "closedRevenueRaw":  2944000,
+        "profitRaw":  247173
+    },
+    {
+        "rocYear":  110,
+        "year":  2021,
+        "month":  3,
+        "closedRevenueRaw":  5382177,
+        "profitRaw":  881125
+    },
+    {
+        "rocYear":  110,
+        "year":  2021,
+        "month":  4,
+        "closedRevenueRaw":  3132750,
+        "profitRaw":  426608
+    },
+    {
+        "rocYear":  110,
+        "year":  2021,
+        "month":  5,
+        "closedRevenueRaw":  3371861,
+        "profitRaw":  387421
+    },
+    {
+        "rocYear":  110,
+        "year":  2021,
+        "month":  6,
+        "closedRevenueRaw":  5198091,
+        "profitRaw":  906963
+    },
+    {
+        "rocYear":  110,
+        "year":  2021,
+        "month":  7,
+        "closedRevenueRaw":  5682257,
+        "profitRaw":  988358
+    },
+    {
+        "rocYear":  110,
+        "year":  2021,
+        "month":  8,
+        "closedRevenueRaw":  4099455,
+        "profitRaw":  616046
+    },
+    {
+        "rocYear":  110,
+        "year":  2021,
+        "month":  9,
+        "closedRevenueRaw":  3572829,
+        "profitRaw":  519145
+    },
+    {
+        "rocYear":  110,
+        "year":  2021,
+        "month":  10,
+        "closedRevenueRaw":  4735311,
+        "profitRaw":  796371
+    },
+    {
+        "rocYear":  110,
+        "year":  2021,
+        "month":  11,
+        "closedRevenueRaw":  3791350,
+        "profitRaw":  606242
+    },
+    {
+        "rocYear":  110,
+        "year":  2021,
+        "month":  12,
+        "closedRevenueRaw":  3060400,
+        "profitRaw":  236309
+    },
+    {
+        "rocYear":  111,
+        "year":  2022,
+        "month":  1,
+        "closedRevenueRaw":  3348711,
+        "profitRaw":  512362
+    },
+    {
+        "rocYear":  111,
+        "year":  2022,
+        "month":  2,
+        "closedRevenueRaw":  5655000,
+        "profitRaw":  978066
+    },
+    {
+        "rocYear":  111,
+        "year":  2022,
+        "month":  3,
+        "closedRevenueRaw":  4994050,
+        "profitRaw":  706582
+    },
+    {
+        "rocYear":  111,
+        "year":  2022,
+        "month":  4,
+        "closedRevenueRaw":  2214900,
+        "profitRaw":  239163
+    },
+    {
+        "rocYear":  111,
+        "year":  2022,
+        "month":  5,
+        "closedRevenueRaw":  5655827,
+        "profitRaw":  824192
+    },
+    {
+        "rocYear":  111,
+        "year":  2022,
+        "month":  6,
+        "closedRevenueRaw":  4234178,
+        "profitRaw":  635659
+    },
+    {
+        "rocYear":  111,
+        "year":  2022,
+        "month":  7,
+        "closedRevenueRaw":  5509452,
+        "profitRaw":  902250
+    },
+    {
+        "rocYear":  111,
+        "year":  2022,
+        "month":  8,
+        "closedRevenueRaw":  1617930,
+        "profitRaw":  115879
+    },
+    {
+        "rocYear":  111,
+        "year":  2022,
+        "month":  9,
+        "closedRevenueRaw":  1887801,
+        "profitRaw":  255207
+    },
+    {
+        "rocYear":  111,
+        "year":  2022,
+        "month":  10,
+        "closedRevenueRaw":  2650991,
+        "profitRaw":  356461
+    },
+    {
+        "rocYear":  111,
+        "year":  2022,
+        "month":  11,
+        "closedRevenueRaw":  1507860,
+        "profitRaw":  155690
+    },
+    {
+        "rocYear":  111,
+        "year":  2022,
+        "month":  12,
+        "closedRevenueRaw":  9034104,
+        "profitRaw":  1392435
+    },
+    {
+        "rocYear":  112,
+        "year":  2023,
+        "month":  1,
+        "closedRevenueRaw":  1024700,
+        "profitRaw":  -97498
+    },
+    {
+        "rocYear":  112,
+        "year":  2023,
+        "month":  2,
+        "closedRevenueRaw":  1587850,
+        "profitRaw":  94558
+    },
+    {
+        "rocYear":  112,
+        "year":  2023,
+        "month":  3,
+        "closedRevenueRaw":  2691150,
+        "profitRaw":  440346
+    },
+    {
+        "rocYear":  112,
+        "year":  2023,
+        "month":  4,
+        "closedRevenueRaw":  1764038,
+        "profitRaw":  169686
+    },
+    {
+        "rocYear":  112,
+        "year":  2023,
+        "month":  5,
+        "closedRevenueRaw":  3225383,
+        "profitRaw":  373995
+    },
+    {
+        "rocYear":  112,
+        "year":  2023,
+        "month":  6,
+        "closedRevenueRaw":  4492734,
+        "profitRaw":  654709
+    },
+    {
+        "rocYear":  112,
+        "year":  2023,
+        "month":  7,
+        "closedRevenueRaw":  2899600,
+        "profitRaw":  387819
+    },
+    {
+        "rocYear":  112,
+        "year":  2023,
+        "month":  8,
+        "closedRevenueRaw":  4690936,
+        "profitRaw":  705151
+    },
+    {
+        "rocYear":  112,
+        "year":  2023,
+        "month":  9,
+        "closedRevenueRaw":  1950323,
+        "profitRaw":  157661
+    },
+    {
+        "rocYear":  112,
+        "year":  2023,
+        "month":  10,
+        "closedRevenueRaw":  5003917,
+        "profitRaw":  797481
+    },
+    {
+        "rocYear":  112,
+        "year":  2023,
+        "month":  11,
+        "closedRevenueRaw":  1458470,
+        "profitRaw":  -22003
+    },
+    {
+        "rocYear":  112,
+        "year":  2023,
+        "month":  12,
+        "closedRevenueRaw":  1153847,
+        "profitRaw":  -147017
+    },
+    {
+        "rocYear":  113,
+        "year":  2024,
+        "month":  1,
+        "closedRevenueRaw":  2395600,
+        "profitRaw":  205970
+    },
+    {
+        "rocYear":  113,
+        "year":  2024,
+        "month":  2,
+        "closedRevenueRaw":  2169900,
+        "profitRaw":  282277
+    },
+    {
+        "rocYear":  113,
+        "year":  2024,
+        "month":  3,
+        "closedRevenueRaw":  3075672,
+        "profitRaw":  430368
+    },
+    {
+        "rocYear":  113,
+        "year":  2024,
+        "month":  4,
+        "closedRevenueRaw":  2875766,
+        "profitRaw":  414288
+    },
+    {
+        "rocYear":  113,
+        "year":  2024,
+        "month":  5,
+        "closedRevenueRaw":  4100677,
+        "profitRaw":  558665
+    },
+    {
+        "rocYear":  113,
+        "year":  2024,
+        "month":  6,
+        "closedRevenueRaw":  3705175,
+        "profitRaw":  448526
+    },
+    {
+        "rocYear":  113,
+        "year":  2024,
+        "month":  7,
+        "closedRevenueRaw":  4240202,
+        "profitRaw":  507741
+    },
+    {
+        "rocYear":  113,
+        "year":  2024,
+        "month":  8,
+        "closedRevenueRaw":  4934477,
+        "profitRaw":  838124
+    },
+    {
+        "rocYear":  113,
+        "year":  2024,
+        "month":  9,
+        "closedRevenueRaw":  1453800,
+        "profitRaw":  88315
+    },
+    {
+        "rocYear":  113,
+        "year":  2024,
+        "month":  10,
+        "closedRevenueRaw":  1774736,
+        "profitRaw":  169775
+    },
+    {
+        "rocYear":  113,
+        "year":  2024,
+        "month":  11,
+        "closedRevenueRaw":  1278478,
+        "profitRaw":  179306
+    },
+    {
+        "rocYear":  113,
+        "year":  2024,
+        "month":  12,
+        "closedRevenueRaw":  2645540,
+        "profitRaw":  147740
+    },
+    {
+        "rocYear":  114,
+        "year":  2025,
+        "month":  1,
+        "closedRevenueRaw":  3058522,
+        "profitRaw":  424659
+    },
+    {
+        "rocYear":  114,
+        "year":  2025,
+        "month":  2,
+        "closedRevenueRaw":  1437580,
+        "profitRaw":  99675
+    },
+    {
+        "rocYear":  114,
+        "year":  2025,
+        "month":  3,
+        "closedRevenueRaw":  2052050,
+        "profitRaw":  240134
+    },
+    {
+        "rocYear":  114,
+        "year":  2025,
+        "month":  4,
+        "closedRevenueRaw":  2947022,
+        "profitRaw":  314631
+    },
+    {
+        "rocYear":  114,
+        "year":  2025,
+        "month":  5,
+        "closedRevenueRaw":  1038500,
+        "profitRaw":  2804
+    },
+    {
+        "rocYear":  114,
+        "year":  2025,
+        "month":  6,
+        "closedRevenueRaw":  4774594,
+        "profitRaw":  637764
+    },
+    {
+        "rocYear":  114,
+        "year":  2025,
+        "month":  7,
+        "closedRevenueRaw":  3006716,
+        "profitRaw":  270195
+    },
+    {
+        "rocYear":  114,
+        "year":  2025,
+        "month":  8,
+        "closedRevenueRaw":  1438788,
+        "profitRaw":  484
+    },
+    {
+        "rocYear":  114,
+        "year":  2025,
+        "month":  9,
+        "closedRevenueRaw":  2085000,
+        "profitRaw":  269438
+    },
+    {
+        "rocYear":  114,
+        "year":  2025,
+        "month":  10,
+        "closedRevenueRaw":  110700,
+        "profitRaw":  -274355
+    },
+    {
+        "rocYear":  114,
+        "year":  2025,
+        "month":  11,
+        "closedRevenueRaw":  139862,
+        "profitRaw":  -291649
+    },
+    {
+        "rocYear":  114,
+        "year":  2025,
+        "month":  12,
+        "closedRevenueRaw":  1355150,
+        "profitRaw":  -47955
+    },
+    {
+        "rocYear":  115,
+        "year":  2026,
+        "month":  1,
+        "closedRevenueRaw":  716035,
+        "profitRaw":  -152635
+    },
+    {
+        "rocYear":  115,
+        "year":  2026,
+        "month":  2,
+        "closedRevenueRaw":  2194135,
+        "profitRaw":  192451
+    },
+    {
+        "rocYear":  115,
+        "year":  2026,
+        "month":  3,
+        "closedRevenueRaw":  419800,
+        "profitRaw":  -191734
+    },
+    {
+        "rocYear":  115,
+        "year":  2026,
+        "month":  4,
+        "closedRevenueRaw":  1477700,
+        "profitRaw":  109360
+    },
+    {
+        "rocYear":  115,
+        "year":  2026,
+        "month":  5,
+        "closedRevenueRaw":  1360228,
+        "profitRaw":  67238
+    },
+    {
+        "rocYear":  115,
+        "year":  2026,
+        "month":  6,
+        "closedRevenueRaw":  1092055,
+        "profitRaw":  -21231
+    },
+    {
+        "rocYear":  115,
+        "year":  2026,
+        "month":  7,
+        "closedRevenueRaw":  null,
+        "profitRaw":  null
+    },
+    {
+        "rocYear":  115,
+        "year":  2026,
+        "month":  8,
+        "closedRevenueRaw":  null,
+        "profitRaw":  null
+    },
+    {
+        "rocYear":  115,
+        "year":  2026,
+        "month":  9,
+        "closedRevenueRaw":  null,
+        "profitRaw":  null
+    },
+    {
+        "rocYear":  115,
+        "year":  2026,
+        "month":  10,
+        "closedRevenueRaw":  null,
+        "profitRaw":  null
+    },
+    {
+        "rocYear":  115,
+        "year":  2026,
+        "month":  11,
+        "closedRevenueRaw":  null,
+        "profitRaw":  null
+    },
+    {
+        "rocYear":  115,
+        "year":  2026,
+        "month":  12,
+        "closedRevenueRaw":  null,
+        "profitRaw":  null
+    }
+]
