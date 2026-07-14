@@ -552,8 +552,34 @@ function renderCompanyTable() {
 function renderOverviewPartnerTable() {
   const rows = annualPartnerRows();
   if (isCompactView()) {
-    const selected = window.selectedOverviewPartner || rows[0]?.partnerName || activePartnerNames()[0];
+    const selected = rows.some((row) => row.partnerName === window.selectedOverviewPartner)
+      ? window.selectedOverviewPartner
+      : rows[0]?.partnerName || activePartnerNames()[0];
     window.selectedOverviewPartner = selected;
+    const detail = rows.find((row) => row.partnerName === selected) || rows[0];
+    const detailHtml = detail ? `
+      <table class="overview-detail-table">
+        <thead>
+          <tr>
+            <th>${escapeHtml(detail.partnerName)}${personStatusLabel(detail.partnerName)} 年度業績表</th><th>業績</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${detail.months.map((value, index) => `
+            <tr>
+              <td data-label="月份">${index + 1}月</td>
+              <td data-label="業績"><strong>${money(value)}萬</strong></td>
+            </tr>
+          `).join("")}
+          <tr class="total-row">
+            <td data-label="月份"><strong>年度總計</strong></td>
+            <td data-label="業績"><strong>${money(detail.total)}萬</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    ` : "";
+
+    els.overviewPartnerDetail.innerHTML = detailHtml;
 
     els.overviewPartnerTable.innerHTML = `
       <table class="rank-table">
@@ -564,9 +590,9 @@ function renderOverviewPartnerTable() {
         </thead>
         <tbody>
           ${rows.map((row, index) => `
-            <tr>
+            <tr class="${row.partnerName === selected ? "selected-row" : ""}">
               <td data-label="排名">${index + 1}</td>
-            <td data-label="夥伴"><button class="link-button" type="button" data-overview-partner="${escapeHtml(row.partnerName)}">${escapeHtml(row.partnerName)}${personStatusLabel(row.partnerName)}</button></td>
+            <td data-label="夥伴"><button class="link-button" type="button" data-overview-index="${index}">${escapeHtml(row.partnerName)}${personStatusLabel(row.partnerName)}</button></td>
               <td data-label="年度總業績"><strong>${money(row.total)}萬</strong></td>
             </tr>
           `).join("")}
@@ -574,29 +600,12 @@ function renderOverviewPartnerTable() {
       </table>
     `;
 
-    const detail = rows.find((row) => row.partnerName === selected) || rows[0];
-    els.overviewPartnerDetail.innerHTML = detail ? `
-      <table>
-        <thead>
-          <tr>
-            <th>${escapeHtml(detail.partnerName)}${personStatusLabel(detail.partnerName)}</th><th>業績</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${detail.months.map((value, index) => `
-            <tr>
-              <td data-label="月份">${index + 1}月</td>
-              <td data-label="業績"><strong>${money(value)}萬</strong></td>
-            </tr>
-          `).join("")}
-        </tbody>
-      </table>
-    ` : "";
-
-    els.overviewPartnerTable.querySelectorAll("[data-overview-partner]").forEach((button) => {
+    els.overviewPartnerTable.querySelectorAll("[data-overview-index]").forEach((button) => {
       button.addEventListener("click", () => {
-        window.selectedOverviewPartner = button.dataset.overviewPartner;
+        const row = rows[Number(button.dataset.overviewIndex)];
+        window.selectedOverviewPartner = row?.partnerName || selected;
         renderOverviewPartnerTable();
+        els.overviewPartnerDetail.scrollIntoView({ behavior: "smooth", block: "start" });
       });
     });
     return;

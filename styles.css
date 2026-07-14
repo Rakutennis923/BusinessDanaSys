@@ -272,6 +272,30 @@ th {
 
 td input { min-width: 92px; }
 
+.total-row {
+  background: #eef7f3;
+  border-top: 2px solid var(--green);
+}
+
+.total-row td {
+  font-weight: 900;
+  color: var(--ink);
+}
+
+.total-row td:first-child {
+  color: var(--green);
+  font-size: 18px;
+}
+
+.selected-row {
+  background: #eef7f3;
+  outline: 2px solid rgba(31, 122, 95, .25);
+}
+
+.overview-detail-table {
+  margin-bottom: 12px;
+}
+
 .toolbar {
   display: grid;
   grid-template-columns: repeat(2, minmax(180px, 260px));
