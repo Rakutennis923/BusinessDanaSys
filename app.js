@@ -226,12 +226,19 @@ function peopleForReports(year = state.year) {
   const names = new Set(activePartnerNames());
   state.partners.filter((record) => record.year === year).forEach((record) => names.add(record.partnerName));
   state.weekly.filter((goal) => goal.year === year).forEach((goal) => names.add(goal.partnerName));
-  return [...names].filter(Boolean);
+  return [...names].filter(Boolean).sort((a, b) => {
+    const aPerson = personByName(a);
+    const bPerson = personByName(b);
+    const aSort = aPerson?.sort ?? 9999;
+    const bSort = bPerson?.sort ?? 9999;
+    return aSort - bSort || a.localeCompare(b, "zh-Hant");
+  });
 }
 
 function personStatusLabel(name) {
   const person = personByName(name);
-  return person?.status === "inactive" ? "（離職／停用）" : "";
+  if (!person) return "（歷史）";
+  return person.status === "inactive" ? "（離職／停用）" : "";
 }
 
 function seedCompany(year) {
@@ -284,8 +291,8 @@ function setupPersonSelects() {
   const weeklyValue = els.weeklyPartner.value;
   const filterValue = els.weeklyFilterPartner?.value;
 
-  els.partnerName.innerHTML = activeNames.length
-    ? activeNames.map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join("")
+  els.partnerName.innerHTML = reportNames.length
+    ? reportNames.map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}${personStatusLabel(name)}</option>`).join("")
     : `<option value="">請先新增在職夥伴</option>`;
   els.weeklyPartner.innerHTML = activeNames.length
     ? activeNames.map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join("")
@@ -297,7 +304,7 @@ function setupPersonSelects() {
     )).join("");
   }
 
-  if (activeNames.includes(partnerValue)) els.partnerName.value = partnerValue;
+  if (reportNames.includes(partnerValue)) els.partnerName.value = partnerValue;
   if (activeNames.includes(weeklyValue)) els.weeklyPartner.value = weeklyValue;
   if (els.weeklyFilterPartner && reportNames.includes(filterValue)) els.weeklyFilterPartner.value = filterValue;
 }
@@ -463,6 +470,11 @@ function monthlyPartnerClosings(month) {
   return monthlyPartnerRows(month).reduce((sum, record) => sum + num(record.actualClosings), 0);
 }
 
+function monthlyAgentCount(month) {
+  const names = new Set(monthlyPartnerRows(month).map((record) => record.partnerName).filter(Boolean));
+  return names.size || activePeople().length;
+}
+
 function annualCost() {
   return companyRows().reduce((sum, row) => sum + num(row.fixedCost) + num(row.variableCost), 0);
 }
@@ -476,7 +488,7 @@ function renderOverview() {
   const totals = rows.reduce((sum, row) => {
     const actualRevenue = monthlyPartnerRevenue(row.month);
     const profit = calcProfit(row);
-    const activeAgentCount = activePeople().length;
+    const activeAgentCount = monthlyAgentCount(row.month);
     sum.target += row.targetRevenue;
     sum.annualTarget += annualTarget / 12;
     sum.revenue += actualRevenue;
@@ -625,7 +637,7 @@ function annualPartnerRows() {
 function companyRowHtml(row) {
   const actualRevenue = monthlyPartnerRevenue(row.month);
   const profit = calcProfit(row);
-  const agentCount = activePeople().length;
+  const agentCount = monthlyAgentCount(row.month);
   const efficiency = agentCount ? Math.round(actualRevenue / agentCount) : 0;
   const gap = actualRevenue - row.targetRevenue;
   const closings = monthlyPartnerClosings(row.month);
@@ -724,7 +736,7 @@ function parsePartnerExcel(text) {
   const headers = rows[headerIndex].map(normalizeHeader);
   return rows.slice(headerIndex + 1)
     .map((row) => partnerRecordFromRow(headers, row))
-    .filter((record) => record.partnerName && allPartnerNames().includes(record.partnerName));
+    .filter((record) => record.partnerName);
 }
 
 function parseTabularText(text) {
@@ -764,7 +776,8 @@ function partnerRecordFromRow(headers, row) {
 
 function upsertPartnerRecords(records) {
   records.forEach((record) => {
-    record.personId = record.personId || personByName(record.partnerName)?.id || "";
+    const person = ensureHistoricalPerson(record.partnerName);
+    record.personId = record.personId || person?.id || "";
     const existing = state.partners.find((item) => item.year === record.year && item.month === record.month && item.partnerName === record.partnerName);
     if (existing) {
       Object.assign(existing, record);
@@ -774,10 +787,35 @@ function upsertPartnerRecords(records) {
   });
 }
 
+function ensureHistoricalPerson(name) {
+  if (!name) return null;
+  let person = personByName(name);
+  if (person) return person;
+
+  const now = new Date().toISOString();
+  person = {
+    id: personIdFromName(name),
+    name,
+    branch: "大湳店",
+    title: "歷史夥伴",
+    phone: "",
+    email: "",
+    hireDate: "",
+    exitDate: "",
+    status: "inactive",
+    sort: state.people.length + 1,
+    note: "由歷史排名表匯入時自動建立",
+    createdAt: now,
+    updatedAt: now
+  };
+  state.people.push(person);
+  return person;
+}
+
 function renderPartners() {
   const month = Number(els.partnerMonth.value);
-  const activeNames = activePartnerNames();
-  const visiblePartners = isCompactView() ? [els.partnerName.value].filter(Boolean) : activeNames;
+  const reportNames = peopleForReports(state.year);
+  const visiblePartners = isCompactView() ? [els.partnerName.value].filter(Boolean) : reportNames;
   const rows = visiblePartners.map((name) => findPartnerRecord(name, month) || defaultPartnerRecord(name, month));
   els.partnerCards.innerHTML = rows.map((record) => partnerCardHtml(record, month)).join("");
 }
@@ -806,7 +844,7 @@ function partnerCardHtml(record, selectedMonth) {
 
   return `
     <article class="partner-card ${cardClass}">
-      <h3>${escapeHtml(record.partnerName)}</h3>
+      <h3>${escapeHtml(record.partnerName)}${personStatusLabel(record.partnerName)}</h3>
       <p class="advice">年度業績目標 ${money(annualTarget)}萬，目前達成 ${achievement}%</p>
       <div class="metric-row">
         ${metric("去年同期差", `${signedMoney(yoyGap)}萬`, `去年同期 ${money(lastYtdRevenue)}萬`)}
@@ -1117,8 +1155,10 @@ function drawProfitChart(svg, rows) {
   const width = 720;
   const height = 280;
   const pad = 42;
-  const agentCount = activePeople().length;
-  const max = Math.max(1, ...rows.map(calcProfit), ...rows.map((row) => agentCount ? monthlyPartnerRevenue(row.month) / agentCount : 0));
+  const max = Math.max(1, ...rows.map(calcProfit), ...rows.map((row) => {
+    const agentCount = monthlyAgentCount(row.month);
+    return agentCount ? monthlyPartnerRevenue(row.month) / agentCount : 0;
+  }));
   const barWidth = (width - pad * 2) / 12 * 0.58;
   const y = (value) => height - pad - (value / max) * (height - pad * 2);
   svg.innerHTML = chartBase(width, height, pad, max) + rows.map((row, index) => {
