@@ -27,6 +27,7 @@ const els = {
   companyTable: document.querySelector("#companyTable"),
   companyMonthSelect: document.querySelector("#companyMonthSelect"),
   companyImportFile: document.querySelector("#companyImportFile"),
+  companyImportBtn: document.querySelector("#companyImportBtn"),
   companyImportStatus: document.querySelector("#companyImportStatus"),
   exportCompanyBtn: document.querySelector("#exportCompanyBtn"),
   partnerMonth: document.querySelector("#partnerMonth"),
@@ -341,7 +342,15 @@ function bindEvents() {
     renderPartners();
   });
   if (els.companyMonthSelect) els.companyMonthSelect.addEventListener("change", renderCompanyTable);
-  if (els.companyImportFile) els.companyImportFile.addEventListener("change", importCompanyExcel);
+  if (els.companyImportFile) {
+    els.companyImportFile.addEventListener("change", () => {
+      const file = els.companyImportFile.files[0];
+      if (els.companyImportStatus) {
+        els.companyImportStatus.textContent = file ? `已選擇：${file.name}，請按「讀取資料」` : "尚未匯入";
+      }
+    });
+  }
+  if (els.companyImportBtn) els.companyImportBtn.addEventListener("click", importCompanyExcel);
   els.partnerName.addEventListener("change", () => {
     fillPartnerForm();
     renderPartners();
@@ -357,6 +366,22 @@ function bindEvents() {
   if (els.weeklyFilterPartner) els.weeklyFilterPartner.addEventListener("change", renderWeekly);
   if (els.newPersonBtn) els.newPersonBtn.addEventListener("click", () => openPersonDialog());
   if (els.savePersonBtn) els.savePersonBtn.addEventListener("click", savePerson);
+  if (els.personForm) {
+    els.personForm.addEventListener("submit", (event) => {
+      if (event.submitter?.value === "cancel") return;
+      event.preventDefault();
+      savePerson();
+    });
+  }
+  if (els.peopleTable) {
+    els.peopleTable.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-person-action]");
+      if (!button) return;
+      const person = personById(button.dataset.personId);
+      if (button.dataset.personAction === "edit") openPersonDialog(person);
+      if (button.dataset.personAction === "toggle") togglePersonStatus(button.dataset.personId);
+    });
+  }
   if (els.peopleStatusFilter) els.peopleStatusFilter.addEventListener("change", renderPeople);
   if (els.peopleSearch) els.peopleSearch.addEventListener("input", renderPeople);
   window.addEventListener("resize", () => {
@@ -425,6 +450,7 @@ async function saveCloudState() {
 function isCloudStateEmpty(cloudState) {
   return !Object.keys(cloudState.annualTargets || {}).length
     && !(cloudState.company || []).length
+    && !(cloudState.people || []).length
     && !(cloudState.partners || []).length
     && !(cloudState.weekly || []).length;
 }
@@ -473,6 +499,12 @@ function monthlyPartnerRows(month) {
 
 function monthlyPartnerRevenue(month) {
   return monthlyPartnerRows(month).reduce((sum, record) => sum + num(record.actualRevenue), 0);
+}
+
+function monthlyPartnerRevenueForYear(year, month) {
+  return state.partners
+    .filter((record) => record.year === year && record.month === month)
+    .reduce((sum, record) => sum + num(record.actualRevenue), 0);
 }
 
 function monthlyPartnerClosings(month) {
@@ -533,7 +565,7 @@ function renderCompanyTable() {
     <table>
       <thead>
         <tr>
-          <th>月份</th><th>預測業績</th><th>實際業績</th><th>關帳業績</th><th>人數</th><th>盈餘</th><th>人效</th><th>差距</th><th>成交</th>
+          <th>月份</th><th>預測業績</th><th>實際業績</th><th>關帳業績</th><th>人數</th><th>盈餘</th><th>人效</th><th>和去年同期差距%</th><th>成交</th>
         </tr>
       </thead>
       <tbody>
@@ -564,7 +596,7 @@ function renderOverviewPartnerTable() {
       <table class="overview-detail-table">
         <thead>
           <tr>
-            <th>${escapeHtml(detail.partnerName)}${personStatusLabel(detail.partnerName)} 年度業績表</th><th>業績</th>
+            <th>${annualRowName(detail)} 年度業績表</th><th>業績</th>
           </tr>
         </thead>
         <tbody>
@@ -594,8 +626,8 @@ function renderOverviewPartnerTable() {
         <tbody>
           ${rows.map((row, index) => `
             <tr class="${row.partnerName === selected ? "selected-row" : ""}">
-              <td data-label="排名">${index + 1}</td>
-            <td data-label="夥伴"><button class="link-button" type="button" data-overview-index="${index}">${escapeHtml(row.partnerName)}${personStatusLabel(row.partnerName)}</button></td>
+              <td data-label="排名">${row.isAggregate ? "合計" : index + 1}</td>
+            <td data-label="夥伴"><button class="link-button" type="button" data-overview-index="${index}">${annualRowName(row)}</button></td>
               <td data-label="年度總業績"><strong>${money(row.total)}萬</strong></td>
             </tr>
           `).join("")}
@@ -627,8 +659,8 @@ function renderOverviewPartnerTable() {
       <tbody>
         ${rows.map((row, index) => `
           <tr>
-            <td data-label="排名">${index + 1}</td>
-            <td data-label="夥伴">${escapeHtml(row.partnerName)}${personStatusLabel(row.partnerName)}</td>
+            <td data-label="排名">${row.isAggregate ? "合計" : index + 1}</td>
+            <td data-label="夥伴">${annualRowName(row)}</td>
             ${row.months.map((value, monthIndex) => `<td data-label="${monthIndex + 1}月">${money(value)}萬</td>`).join("")}
             <td data-label="年度總業績"><strong>${money(row.total)}萬</strong></td>
           </tr>
@@ -639,14 +671,43 @@ function renderOverviewPartnerTable() {
 }
 
 function annualPartnerRows() {
-  return peopleForReports(state.year).map((partnerName) => {
-    const months = Array.from({ length: 12 }, (_, index) => {
-      const record = findPartnerRecord(partnerName, index + 1, state.year);
-      return num(record?.actualRevenue);
+  const activeRows = activePartnerNames().map((partnerName) => annualPartnerRow(partnerName, false))
+    .sort((a, b) => b.total - a.total || a.partnerName.localeCompare(b.partnerName, "zh-Hant"));
+
+  const activeNameSet = new Set(activePartnerNames());
+  const inactiveNames = [...new Set(state.partners
+    .filter((record) => record.year === state.year && record.partnerName && !activeNameSet.has(record.partnerName))
+    .map((record) => record.partnerName))];
+
+  const inactiveMonths = Array.from({ length: 12 }, (_, index) => inactiveNames.reduce((sum, name) => {
+    const record = findPartnerRecord(name, index + 1, state.year);
+    return sum + num(record?.actualRevenue);
+  }, 0));
+  const inactiveTotal = inactiveMonths.reduce((sum, value) => sum + value, 0);
+
+  if (inactiveTotal > 0) {
+    activeRows.push({
+      partnerName: "離職夥伴合計",
+      months: inactiveMonths,
+      total: inactiveTotal,
+      isAggregate: true
     });
-    const total = months.reduce((sum, value) => sum + value, 0);
-    return { partnerName, months, total };
-  }).sort((a, b) => b.total - a.total || a.partnerName.localeCompare(b.partnerName, "zh-Hant"));
+  }
+
+  return activeRows;
+}
+
+function annualPartnerRow(partnerName, isAggregate) {
+  const months = Array.from({ length: 12 }, (_, index) => {
+    const record = findPartnerRecord(partnerName, index + 1, state.year);
+    return num(record?.actualRevenue);
+  });
+  const total = months.reduce((sum, value) => sum + value, 0);
+  return { partnerName, months, total, isAggregate };
+}
+
+function annualRowName(row) {
+  return row.isAggregate ? "離職夥伴合計" : `${escapeHtml(row.partnerName)}${personStatusLabel(row.partnerName)}`;
 }
 
 function companyRowHtml(row) {
@@ -654,7 +715,7 @@ function companyRowHtml(row) {
   const profit = calcProfit(row);
   const agentCount = monthlyAgentCount(row.month);
   const efficiency = agentCount ? Math.round(actualRevenue / agentCount) : 0;
-  const gap = actualRevenue - row.targetRevenue;
+  const yoyRate = sameMonthYoYRate(row.month);
   const closings = monthlyPartnerClosings(row.month);
   return `
     <tr>
@@ -665,7 +726,7 @@ function companyRowHtml(row) {
       <td data-label="人數"><strong>${agentCount}</strong></td>
       ${inputCell(row, "profit", "盈餘")}
       <td data-label="人效">${money(efficiency)}萬</td>
-      <td data-label="差距" class="${gap >= 0 ? "status-good" : "status-risk"}">${signedMoney(gap)}萬</td>
+      <td data-label="和去年同期差距%" class="${percentStatusClass(yoyRate)}">${signedPercent(yoyRate)}</td>
       <td data-label="成交"><strong>${closings}件</strong></td>
     </tr>
   `;
@@ -674,25 +735,27 @@ function companyRowHtml(row) {
 function companyTotalRowHtml(rows) {
   const total = rows.reduce((sum, row) => {
     const actualRevenue = monthlyPartnerRevenue(row.month);
+    const lastYearRevenue = monthlyPartnerRevenueForYear(state.year - 1, row.month);
     const agentCount = monthlyAgentCount(row.month);
     sum.targetRevenue += num(row.targetRevenue);
     sum.actualRevenue += actualRevenue;
+    sum.lastYearRevenue += lastYearRevenue;
     sum.closedRevenue += num(row.closedRevenue);
     sum.agentCount += agentCount;
     sum.profit += calcProfit(row);
-    sum.gap += actualRevenue - num(row.targetRevenue);
     sum.closings += monthlyPartnerClosings(row.month);
     return sum;
   }, {
     targetRevenue: 0,
     actualRevenue: 0,
+    lastYearRevenue: 0,
     closedRevenue: 0,
     agentCount: 0,
     profit: 0,
-    gap: 0,
     closings: 0
   });
   const efficiency = total.agentCount ? total.actualRevenue / total.agentCount : 0;
+  const yoyRate = percentChange(total.actualRevenue, total.lastYearRevenue);
 
   return `
     <tr class="total-row">
@@ -703,7 +766,7 @@ function companyTotalRowHtml(rows) {
       <td data-label="人數"><strong>-</strong></td>
       <td data-label="盈餘"><strong>${money(total.profit)}萬</strong></td>
       <td data-label="人效"><strong>${money(efficiency)}萬</strong></td>
-      <td data-label="差距" class="${total.gap >= 0 ? "status-good" : "status-risk"}"><strong>${signedMoney(total.gap)}萬</strong></td>
+      <td data-label="和去年同期差距%" class="${percentStatusClass(yoyRate)}"><strong>${signedPercent(yoyRate)}</strong></td>
       <td data-label="成交"><strong>${total.closings}件</strong></td>
     </tr>
   `;
@@ -801,9 +864,14 @@ function parseTabularText(text) {
     .filter((row) => row.some(Boolean));
 }
 
-function importCompanyExcel(event) {
-  const file = event.target.files[0];
-  if (!file) return;
+function importCompanyExcel() {
+  const file = els.companyImportFile?.files?.[0];
+  if (!file) {
+    if (els.companyImportStatus) els.companyImportStatus.textContent = "請先選擇月營運 Excel 檔";
+    return;
+  }
+
+  if (els.companyImportStatus) els.companyImportStatus.textContent = "正在讀取月營運資料...";
 
   const isWorkbookFile = /\.(xlsx|xls)$/i.test(file.name);
   const useWorkbookParser = isWorkbookFile && window.XLSX;
@@ -820,6 +888,7 @@ function importCompanyExcel(event) {
         ? rowsFromWorkbook(reader.result)
         : parseTabularText(String(reader.result || ""));
       const imported = parseCompanyExcel(rows);
+      if (!imported.length) throw new Error("No company rows imported");
       upsertCompanyRecords(imported);
       state.company = ensureCompanyYear(state.year);
       saveState();
@@ -853,7 +922,8 @@ function parseCompanyExcel(rows) {
   const headers = rows[headerIndex].map(normalizeHeader);
   return rows.slice(headerIndex + 1)
     .map((row) => companyRecordFromRow(headers, row))
-    .filter((record) => record.year && record.month >= 1 && record.month <= 12);
+    .filter((record) => record.year && record.month >= 1 && record.month <= 12)
+    .filter((record) => num(record.closedRevenue) !== 0 || num(record.profit) !== 0);
 }
 
 function companyRecordFromRow(headers, row) {
@@ -892,7 +962,8 @@ function upsertCompanyRecords(records) {
       state.company.push(existing);
     }
 
-    Object.assign(existing, record);
+    existing.closedRevenue = num(record.closedRevenue);
+    existing.profit = num(record.profit);
   });
 }
 
@@ -1169,9 +1240,11 @@ function savePerson() {
   };
 
   if (payload.status === "inactive" && !payload.exitDate) payload.exitDate = isoDate(new Date());
+  if (payload.status === "active") payload.exitDate = "";
 
   if (id) {
     const person = personById(id);
+    if (!person) return;
     const oldName = person.name;
     Object.assign(person, payload);
     if (oldName !== payload.name) renamePersonInRecords(oldName, payload.name, person.id);
@@ -1187,9 +1260,8 @@ function savePerson() {
     });
   }
 
-  saveState();
   els.personDialog.close();
-  render();
+  refreshAfterPeopleChange();
 }
 
 function renamePersonInRecords(oldName, newName, personId) {
@@ -1212,7 +1284,13 @@ function togglePersonStatus(id) {
   if (!person) return;
   person.status = person.status === "active" ? "inactive" : "active";
   if (person.status === "inactive" && !person.exitDate) person.exitDate = isoDate(new Date());
+  if (person.status === "active") person.exitDate = "";
   person.updatedAt = new Date().toISOString();
+  refreshAfterPeopleChange();
+}
+
+function refreshAfterPeopleChange() {
+  setupPersonSelects();
   saveState();
   render();
 }
@@ -1240,13 +1318,6 @@ function renderPeople() {
     </table>
   `;
 
-  els.peopleTable.querySelectorAll("[data-person-action]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const person = personById(button.dataset.personId);
-      if (button.dataset.personAction === "edit") openPersonDialog(person);
-      if (button.dataset.personAction === "toggle") togglePersonStatus(button.dataset.personId);
-    });
-  });
 }
 
 function personRowHtml(person) {
@@ -1356,6 +1427,18 @@ function rate(actual, target) {
   return Math.round((actual / target) * 100);
 }
 
+function sameMonthYoYRate(month) {
+  return percentChange(
+    monthlyPartnerRevenueForYear(state.year, month),
+    monthlyPartnerRevenueForYear(state.year - 1, month)
+  );
+}
+
+function percentChange(current, previous) {
+  if (!previous) return null;
+  return ((current - previous) / previous) * 100;
+}
+
 function num(value) {
   return Number(value) || 0;
 }
@@ -1367,6 +1450,17 @@ function money(value) {
 function signedMoney(value) {
   const number = Number(value) || 0;
   return `${number >= 0 ? "+" : ""}${number.toFixed(2)}`;
+}
+
+function signedPercent(value) {
+  if (value === null || value === undefined || Number.isNaN(Number(value))) return "—";
+  const number = Number(value) || 0;
+  return `${number >= 0 ? "+" : ""}${number.toFixed(2)}%`;
+}
+
+function percentStatusClass(value) {
+  if (value === null || value === undefined || Number.isNaN(Number(value))) return "";
+  return value >= 0 ? "status-good" : "status-risk";
 }
 
 function numberFromText(value) {
