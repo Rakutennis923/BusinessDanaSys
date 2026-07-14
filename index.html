@@ -28,6 +28,7 @@
       <button class="tab" type="button" data-view="company">月營運</button>
       <button class="tab" type="button" data-view="partners">夥伴績效</button>
       <button class="tab" type="button" data-view="weekly">週目標</button>
+      <button class="tab" type="button" data-view="people">人事管理</button>
     </nav>
 
     <section id="overview" class="view active">
@@ -151,7 +152,63 @@
       </div>
       <div id="weeklyBoard" class="weekly-grid"></div>
     </section>
+
+    <section id="people" class="view">
+      <div class="section-head">
+        <div>
+          <h2>人事管理</h2>
+          <p>新增夥伴、編輯資料，或將夥伴設為離職／停用。系統不會刪除人員，既有績效與週目標仍會保留查詢。</p>
+        </div>
+        <button id="newPersonBtn" type="button">新增夥伴</button>
+      </div>
+      <div class="toolbar people-toolbar">
+        <label>
+          人員狀態
+          <select id="peopleStatusFilter">
+            <option value="active">只看在職</option>
+            <option value="all">全部人員</option>
+            <option value="inactive">離職／停用</option>
+          </select>
+        </label>
+        <label>
+          搜尋
+          <input id="peopleSearch" type="search" placeholder="姓名、店別、職稱">
+        </label>
+      </div>
+      <div id="peopleTable" class="table-wrap people-table"></div>
+    </section>
   </main>
+
+  <dialog id="personDialog">
+    <form id="personForm" method="dialog" class="person-dialog">
+      <div class="dialog-head">
+        <h2 id="personDialogTitle">新增夥伴</h2>
+        <button class="icon-button" type="submit" value="cancel" aria-label="關閉">×</button>
+      </div>
+      <input id="personId" type="hidden">
+      <div class="entry-panel person-form">
+        <label>姓名<input id="personName" required></label>
+        <label>店別<input id="personBranch" value="大湳店"></label>
+        <label>職稱<input id="personTitle" value="業務"></label>
+        <label>手機<input id="personPhone" inputmode="tel"></label>
+        <label>Email<input id="personEmail" type="email"></label>
+        <label>到職日<input id="personHireDate" type="date"></label>
+        <label>離職日<input id="personExitDate" type="date"></label>
+        <label>狀態
+          <select id="personStatus">
+            <option value="active">在職</option>
+            <option value="inactive">離職／停用</option>
+          </select>
+        </label>
+        <label>排序<input id="personSort" type="number" min="1" step="1"></label>
+        <label class="wide-field">備註<input id="personNote"></label>
+      </div>
+      <div class="dialog-actions">
+        <button type="submit" value="cancel">取消</button>
+        <button class="primary" id="savePersonBtn" type="button">儲存</button>
+      </div>
+    </form>
+  </dialog>
 
   <script src="app.js"></script>
 </body>

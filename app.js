@@ -2,7 +2,7 @@ const STORAGE_KEY = "danan-business-admin-v2";
 const CLOUD_API_URL = "https://script.google.com/macros/s/AKfycby_YVfqeWsBQlHtkd1d5tILCXz3qTcIL7uAmlRI1K2Kp8xjVvxHTU7Jupw8O0nHUinz/exec";
 let cloudSyncTimer = null;
 
-const partners = [
+const defaultPartnerNames = [
   "王沛琳", "王淑貞", "冷蕙名", "余惠如", "宋美珠", "林建智", "林恒儀", "林靂玄",
   "胡春木", "徐盛雄", "陳光霆", "陳亞琴", "陳柏宏", "陳雅惠", "陳嘉儀", "詹穗芬",
   "劉志剛", "林婉茹", "黃立鈞", "潘禹璇", "鍾秀琴", "謝心瑀", "簡偉宏", "魏廉庭"
@@ -48,8 +48,26 @@ const els = {
   weeklyTarget: document.querySelector("#weeklyTarget"),
   weeklyActual: document.querySelector("#weeklyActual"),
   weeklyFilterPartner: document.querySelector("#weeklyFilterPartner"),
-  weeklyBoard: document.querySelector("#weeklyBoard")
-  , exportWeeklyBtn: document.querySelector("#exportWeeklyBtn")
+  weeklyBoard: document.querySelector("#weeklyBoard"),
+  exportWeeklyBtn: document.querySelector("#exportWeeklyBtn"),
+  newPersonBtn: document.querySelector("#newPersonBtn"),
+  peopleStatusFilter: document.querySelector("#peopleStatusFilter"),
+  peopleSearch: document.querySelector("#peopleSearch"),
+  peopleTable: document.querySelector("#peopleTable"),
+  personDialog: document.querySelector("#personDialog"),
+  personDialogTitle: document.querySelector("#personDialogTitle"),
+  personId: document.querySelector("#personId"),
+  personName: document.querySelector("#personName"),
+  personBranch: document.querySelector("#personBranch"),
+  personTitle: document.querySelector("#personTitle"),
+  personPhone: document.querySelector("#personPhone"),
+  personEmail: document.querySelector("#personEmail"),
+  personHireDate: document.querySelector("#personHireDate"),
+  personExitDate: document.querySelector("#personExitDate"),
+  personStatus: document.querySelector("#personStatus"),
+  personSort: document.querySelector("#personSort"),
+  personNote: document.querySelector("#personNote"),
+  savePersonBtn: document.querySelector("#savePersonBtn")
 };
 
 init();
@@ -70,12 +88,16 @@ function loadState() {
     year,
     annualTargets: { [year]: 6000 },
     company: seedCompany(year),
+    people: seedPeople(),
     partners: seedLastYear(year),
     weekly: []
   };
 }
 
 function normalizeState(raw) {
+  const partnerRows = raw.partners || [];
+  const weeklyRows = raw.weekly || [];
+  const people = normalizePeople(raw.people, partnerRows, weeklyRows);
   return {
     year: raw.year || new Date().getFullYear(),
     annualTargets: raw.annualTargets || { [raw.year || new Date().getFullYear()]: 6000 },
@@ -84,9 +106,132 @@ function normalizeState(raw) {
       ...row,
       actualRevenue: Number(row.actualRevenue) || 0
     })),
-    partners: raw.partners || [],
-    weekly: raw.weekly || []
+    people,
+    partners: partnerRows.map((record) => normalizePartnerRecord(record, people)),
+    weekly: weeklyRows.map((goal) => normalizeWeeklyGoal(goal, people))
   };
+}
+
+function seedPeople() {
+  return defaultPartnerNames.map((name, index) => personFromName(name, index + 1));
+}
+
+function normalizePeople(rawPeople, partnerRows = [], weeklyRows = []) {
+  const names = [
+    ...defaultPartnerNames,
+    ...partnerRows.map((record) => record.partnerName),
+    ...weeklyRows.map((goal) => goal.partnerName)
+  ].filter(Boolean);
+  const byName = new Map();
+
+  (rawPeople || []).forEach((person, index) => {
+    const normalized = {
+      id: person.id || personIdFromName(person.name || `夥伴${index + 1}`),
+      name: person.name || "",
+      branch: person.branch || "大湳店",
+      title: person.title || "業務",
+      phone: person.phone || "",
+      email: person.email || "",
+      hireDate: person.hireDate || "",
+      exitDate: person.exitDate || "",
+      status: person.status === "inactive" ? "inactive" : "active",
+      sort: Number(person.sort || index + 1),
+      note: person.note || "",
+      createdAt: person.createdAt || new Date().toISOString(),
+      updatedAt: person.updatedAt || new Date().toISOString()
+    };
+    if (normalized.name) byName.set(normalized.name, normalized);
+  });
+
+  names.forEach((name) => {
+    if (!byName.has(name)) byName.set(name, personFromName(name, byName.size + 1));
+  });
+
+  return [...byName.values()].sort((a, b) => a.sort - b.sort || a.name.localeCompare(b.name, "zh-Hant"));
+}
+
+function normalizePartnerRecord(record, people) {
+  const person = personByName(record.partnerName, people) || personById(record.personId, people);
+  return {
+    ...record,
+    personId: record.personId || person?.id || "",
+    partnerName: record.partnerName || person?.name || ""
+  };
+}
+
+function normalizeWeeklyGoal(goal, people) {
+  const person = personByName(goal.partnerName, people) || personById(goal.personId, people);
+  return {
+    ...goal,
+    personId: goal.personId || person?.id || "",
+    partnerName: goal.partnerName || person?.name || ""
+  };
+}
+
+function personFromName(name, sort) {
+  const now = new Date().toISOString();
+  return {
+    id: personIdFromName(name),
+    name,
+    branch: "大湳店",
+    title: "業務",
+    phone: "",
+    email: "",
+    hireDate: "",
+    exitDate: "",
+    status: "active",
+    sort,
+    note: "",
+    createdAt: now,
+    updatedAt: now
+  };
+}
+
+function personIdFromName(name) {
+  let hash = 0;
+  String(name).split("").forEach((char) => {
+    hash = ((hash << 5) - hash) + char.charCodeAt(0);
+    hash |= 0;
+  });
+  return `emp-${Math.abs(hash)}`;
+}
+
+function personByName(name, people = state.people) {
+  return people.find((person) => person.name === name);
+}
+
+function personById(id, people = state.people) {
+  return people.find((person) => person.id === id);
+}
+
+function sortedPeople(includeInactive = true) {
+  return [...state.people]
+    .filter((person) => includeInactive || person.status === "active")
+    .sort((a, b) => a.sort - b.sort || a.name.localeCompare(b.name, "zh-Hant"));
+}
+
+function activePeople() {
+  return sortedPeople(false);
+}
+
+function activePartnerNames() {
+  return activePeople().map((person) => person.name);
+}
+
+function allPartnerNames() {
+  return sortedPeople(true).map((person) => person.name);
+}
+
+function peopleForReports(year = state.year) {
+  const names = new Set(activePartnerNames());
+  state.partners.filter((record) => record.year === year).forEach((record) => names.add(record.partnerName));
+  state.weekly.filter((goal) => goal.year === year).forEach((goal) => names.add(goal.partnerName));
+  return [...names].filter(Boolean);
+}
+
+function personStatusLabel(name) {
+  const person = personByName(name);
+  return person?.status === "inactive" ? "（離職／停用）" : "";
 }
 
 function seedCompany(year) {
@@ -104,7 +249,7 @@ function seedCompany(year) {
 
 function seedLastYear(year) {
   const lastYear = year - 1;
-  return partners.flatMap((partner, partnerIndex) => {
+  return defaultPartnerNames.flatMap((partner, partnerIndex) => {
     return Array.from({ length: 12 }, (_, monthIndex) => ({
       year: lastYear,
       month: monthIndex + 1,
@@ -127,11 +272,34 @@ function setupSelects() {
     els.companyMonthSelect.innerHTML = monthLabels.map((label, i) => `<option value="${i + 1}">${label}</option>`).join("");
     els.companyMonthSelect.value = String(new Date().getMonth() + 1);
   }
-  els.partnerName.innerHTML = partners.map((name) => `<option>${name}</option>`).join("");
-  els.weeklyPartner.innerHTML = partners.map((name) => `<option>${name}</option>`).join("");
-  if (els.weeklyFilterPartner) els.weeklyFilterPartner.innerHTML = partners.map((name) => `<option>${name}</option>`).join("");
+  setupPersonSelects();
   els.weeklyType.innerHTML = goalTypes.map((type) => `<option>${type}</option>`).join("");
   els.weeklyDate.value = isoDate(new Date());
+}
+
+function setupPersonSelects() {
+  const activeNames = activePartnerNames();
+  const reportNames = peopleForReports();
+  const partnerValue = els.partnerName.value;
+  const weeklyValue = els.weeklyPartner.value;
+  const filterValue = els.weeklyFilterPartner?.value;
+
+  els.partnerName.innerHTML = activeNames.length
+    ? activeNames.map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join("")
+    : `<option value="">請先新增在職夥伴</option>`;
+  els.weeklyPartner.innerHTML = activeNames.length
+    ? activeNames.map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join("")
+    : `<option value="">請先新增在職夥伴</option>`;
+
+  if (els.weeklyFilterPartner) {
+    els.weeklyFilterPartner.innerHTML = reportNames.map((name) => (
+      `<option value="${escapeHtml(name)}">${escapeHtml(name)}${personStatusLabel(name)}</option>`
+    )).join("");
+  }
+
+  if (activeNames.includes(partnerValue)) els.partnerName.value = partnerValue;
+  if (activeNames.includes(weeklyValue)) els.weeklyPartner.value = weeklyValue;
+  if (els.weeklyFilterPartner && reportNames.includes(filterValue)) els.weeklyFilterPartner.value = filterValue;
 }
 
 function bindEvents() {
@@ -171,6 +339,10 @@ function bindEvents() {
   els.exportPartnersBtn.addEventListener("click", exportPartnersReport);
   els.exportWeeklyBtn.addEventListener("click", exportWeeklyReport);
   if (els.weeklyFilterPartner) els.weeklyFilterPartner.addEventListener("change", renderWeekly);
+  if (els.newPersonBtn) els.newPersonBtn.addEventListener("click", () => openPersonDialog());
+  if (els.savePersonBtn) els.savePersonBtn.addEventListener("click", savePerson);
+  if (els.peopleStatusFilter) els.peopleStatusFilter.addEventListener("change", renderPeople);
+  if (els.peopleSearch) els.peopleSearch.addEventListener("input", renderPeople);
   window.addEventListener("resize", () => {
     renderCompanyTable();
     renderOverviewPartnerTable();
@@ -257,11 +429,13 @@ function ensureAnnualTarget(year) {
 }
 
 function render() {
+  setupPersonSelects();
   renderOverview();
   renderCompanyTable();
   fillPartnerForm();
   renderPartners();
   renderWeekly();
+  renderPeople();
 }
 
 function switchView(viewId) {
@@ -302,13 +476,14 @@ function renderOverview() {
   const totals = rows.reduce((sum, row) => {
     const actualRevenue = monthlyPartnerRevenue(row.month);
     const profit = calcProfit(row);
+    const activeAgentCount = activePeople().length;
     sum.target += row.targetRevenue;
     sum.annualTarget += annualTarget / 12;
     sum.revenue += actualRevenue;
     sum.closedRevenue += row.closedRevenue;
     sum.profit += profit;
     sum.closed += monthlyPartnerClosings(row.month);
-    sum.agentMonths += row.agentCount;
+    sum.agentMonths += activeAgentCount;
     return sum;
   }, { target: 0, annualTarget: 0, revenue: 0, closedRevenue: 0, profit: 0, closed: 0, agentMonths: 0 });
 
@@ -362,7 +537,7 @@ function renderCompanyTable() {
 function renderOverviewPartnerTable() {
   const rows = annualPartnerRows();
   if (isCompactView()) {
-    const selected = window.selectedOverviewPartner || rows[0]?.partnerName || partners[0];
+    const selected = window.selectedOverviewPartner || rows[0]?.partnerName || activePartnerNames()[0];
     window.selectedOverviewPartner = selected;
 
     els.overviewPartnerTable.innerHTML = `
@@ -376,7 +551,7 @@ function renderOverviewPartnerTable() {
           ${rows.map((row, index) => `
             <tr>
               <td data-label="排名">${index + 1}</td>
-              <td data-label="夥伴"><button class="link-button" type="button" data-overview-partner="${row.partnerName}">${row.partnerName}</button></td>
+            <td data-label="夥伴"><button class="link-button" type="button" data-overview-partner="${escapeHtml(row.partnerName)}">${escapeHtml(row.partnerName)}${personStatusLabel(row.partnerName)}</button></td>
               <td data-label="年度總業績"><strong>${money(row.total)}萬</strong></td>
             </tr>
           `).join("")}
@@ -389,7 +564,7 @@ function renderOverviewPartnerTable() {
       <table>
         <thead>
           <tr>
-            <th>${detail.partnerName}</th><th>業績</th>
+            <th>${escapeHtml(detail.partnerName)}${personStatusLabel(detail.partnerName)}</th><th>業績</th>
           </tr>
         </thead>
         <tbody>
@@ -426,7 +601,7 @@ function renderOverviewPartnerTable() {
         ${rows.map((row, index) => `
           <tr>
             <td data-label="排名">${index + 1}</td>
-            <td data-label="夥伴">${row.partnerName}</td>
+            <td data-label="夥伴">${escapeHtml(row.partnerName)}${personStatusLabel(row.partnerName)}</td>
             ${row.months.map((value, monthIndex) => `<td data-label="${monthIndex + 1}月">${money(value)}萬</td>`).join("")}
             <td data-label="年度總業績"><strong>${money(row.total)}萬</strong></td>
           </tr>
@@ -437,7 +612,7 @@ function renderOverviewPartnerTable() {
 }
 
 function annualPartnerRows() {
-  return partners.map((partnerName) => {
+  return peopleForReports(state.year).map((partnerName) => {
     const months = Array.from({ length: 12 }, (_, index) => {
       const record = findPartnerRecord(partnerName, index + 1, state.year);
       return num(record?.actualRevenue);
@@ -450,7 +625,8 @@ function annualPartnerRows() {
 function companyRowHtml(row) {
   const actualRevenue = monthlyPartnerRevenue(row.month);
   const profit = calcProfit(row);
-  const efficiency = row.agentCount ? Math.round(actualRevenue / row.agentCount) : 0;
+  const agentCount = activePeople().length;
+  const efficiency = agentCount ? Math.round(actualRevenue / agentCount) : 0;
   const gap = actualRevenue - row.targetRevenue;
   const closings = monthlyPartnerClosings(row.month);
   return `
@@ -459,7 +635,7 @@ function companyRowHtml(row) {
       ${inputCell(row, "targetRevenue", "預測業績")}
       <td data-label="實際業績"><strong>${money(actualRevenue)}萬</strong></td>
       ${inputCell(row, "closedRevenue", "關帳業績")}
-      ${inputCell(row, "agentCount", "人數")}
+      <td data-label="人數"><strong>${agentCount}</strong></td>
       ${inputCell(row, "fixedCost", "固定成本")}
       ${inputCell(row, "variableCost", "變動成本")}
       <td data-label="盈餘">${money(profit)}萬</td>
@@ -477,6 +653,7 @@ function inputCell(row, field, label) {
 }
 
 function fillPartnerForm() {
+  if (!els.partnerName.value) return;
   const record = findPartnerRecord();
   els.annualRevenueTarget.value = money(record?.annualRevenueTarget || latestAnnualTarget(els.partnerName.value));
   els.actualRevenue.value = money(record?.actualRevenue || 0);
@@ -498,9 +675,13 @@ function savePartnerRecord(event) {
   event.preventDefault();
   const month = Number(els.partnerMonth.value);
   const partnerName = els.partnerName.value;
+  if (!partnerName || !personByName(partnerName) || personByName(partnerName).status !== "active") {
+    alert("請先在人事管理新增或恢復一位在職夥伴。");
+    return;
+  }
   let record = findPartnerRecord(partnerName, month);
   if (!record) {
-    record = { year: state.year, month, partnerName };
+    record = { year: state.year, month, partnerName, personId: personByName(partnerName)?.id || "" };
     state.partners.push(record);
   }
 
@@ -543,7 +724,7 @@ function parsePartnerExcel(text) {
   const headers = rows[headerIndex].map(normalizeHeader);
   return rows.slice(headerIndex + 1)
     .map((row) => partnerRecordFromRow(headers, row))
-    .filter((record) => record.partnerName && partners.includes(record.partnerName));
+    .filter((record) => record.partnerName && allPartnerNames().includes(record.partnerName));
 }
 
 function parseTabularText(text) {
@@ -583,6 +764,7 @@ function partnerRecordFromRow(headers, row) {
 
 function upsertPartnerRecords(records) {
   records.forEach((record) => {
+    record.personId = record.personId || personByName(record.partnerName)?.id || "";
     const existing = state.partners.find((item) => item.year === record.year && item.month === record.month && item.partnerName === record.partnerName);
     if (existing) {
       Object.assign(existing, record);
@@ -594,7 +776,8 @@ function upsertPartnerRecords(records) {
 
 function renderPartners() {
   const month = Number(els.partnerMonth.value);
-  const visiblePartners = isCompactView() ? [els.partnerName.value] : partners;
+  const activeNames = activePartnerNames();
+  const visiblePartners = isCompactView() ? [els.partnerName.value].filter(Boolean) : activeNames;
   const rows = visiblePartners.map((name) => findPartnerRecord(name, month) || defaultPartnerRecord(name, month));
   els.partnerCards.innerHTML = rows.map((record) => partnerCardHtml(record, month)).join("");
 }
@@ -623,7 +806,7 @@ function partnerCardHtml(record, selectedMonth) {
 
   return `
     <article class="partner-card ${cardClass}">
-      <h3>${record.partnerName}</h3>
+      <h3>${escapeHtml(record.partnerName)}</h3>
       <p class="advice">年度業績目標 ${money(annualTarget)}萬，目前達成 ${achievement}%</p>
       <div class="metric-row">
         ${metric("去年同期差", `${signedMoney(yoyGap)}萬`, `去年同期 ${money(lastYtdRevenue)}萬`)}
@@ -656,11 +839,17 @@ function latestClosingMonth(name) {
 
 function saveWeeklyGoal(event) {
   event.preventDefault();
+  const person = personByName(els.weeklyPartner.value);
+  if (!person || person.status !== "active") {
+    alert("請先選擇在職夥伴。");
+    return;
+  }
   state.weekly.push({
     id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
     year: state.year,
     meetingDate: els.weeklyDate.value,
-    partnerName: els.weeklyPartner.value,
+    personId: person.id,
+    partnerName: person.name,
     type: els.weeklyType.value,
     target: num(els.weeklyTarget.value),
     actual: num(els.weeklyActual.value),
@@ -711,7 +900,7 @@ function parseGoalExcel(text) {
       actual: completedGoals,
       source: "import"
     };
-  }).filter((goal) => partners.includes(goal.partnerName) && goal.target > 0);
+  }).filter((goal) => allPartnerNames().includes(goal.partnerName) && goal.target > 0);
 }
 
 function renderWeekly() {
@@ -722,7 +911,7 @@ function renderWeekly() {
     return map;
   }, {});
 
-  const visiblePartners = isCompactView() && els.weeklyFilterPartner ? [els.weeklyFilterPartner.value] : partners;
+  const visiblePartners = isCompactView() && els.weeklyFilterPartner ? [els.weeklyFilterPartner.value] : peopleForReports(state.year);
   els.weeklyBoard.innerHTML = visiblePartners.map((name) => weeklyCardHtml(name, grouped[name] || [])).join("");
 }
 
@@ -742,7 +931,7 @@ function weeklyCardHtml(name, goals) {
     : "尚無完成小目標";
   return `
     <article class="weekly-card">
-      <h3>${name}</h3>
+      <h3>${escapeHtml(name)}${personStatusLabel(name)}</h3>
       <p class="advice">本年 ${goals.length} 筆週目標/匯入統計，達成 ${done} 筆</p>
       <div class="metric-row">
         ${metric("完成小目標數", `${done}`, `共 ${goals.length} 筆`)}
@@ -753,6 +942,148 @@ function weeklyCardHtml(name, goals) {
       <p class="completed-list"><strong>完成的小目標：</strong>${completedText}</p>
       <p class="advice">${weeklyAdvice(rateValue, weakType)}</p>
     </article>
+  `;
+}
+
+function openPersonDialog(person = null) {
+  els.personDialogTitle.textContent = person ? "編輯夥伴" : "新增夥伴";
+  els.personId.value = person?.id || "";
+  els.personName.value = person?.name || "";
+  els.personBranch.value = person?.branch || "大湳店";
+  els.personTitle.value = person?.title || "業務";
+  els.personPhone.value = person?.phone || "";
+  els.personEmail.value = person?.email || "";
+  els.personHireDate.value = person?.hireDate || "";
+  els.personExitDate.value = person?.exitDate || "";
+  els.personStatus.value = person?.status || "active";
+  els.personSort.value = person?.sort || state.people.length + 1;
+  els.personNote.value = person?.note || "";
+  els.personDialog.showModal();
+}
+
+function savePerson() {
+  const name = els.personName.value.trim();
+  if (!name) {
+    alert("請輸入夥伴姓名。");
+    return;
+  }
+
+  const id = els.personId.value;
+  const now = new Date().toISOString();
+  const payload = {
+    name,
+    branch: els.personBranch.value.trim() || "大湳店",
+    title: els.personTitle.value.trim() || "業務",
+    phone: els.personPhone.value.trim(),
+    email: els.personEmail.value.trim(),
+    hireDate: els.personHireDate.value,
+    exitDate: els.personExitDate.value,
+    status: els.personStatus.value,
+    sort: Number(els.personSort.value || state.people.length + 1),
+    note: els.personNote.value.trim(),
+    updatedAt: now
+  };
+
+  if (payload.status === "inactive" && !payload.exitDate) payload.exitDate = isoDate(new Date());
+
+  if (id) {
+    const person = personById(id);
+    const oldName = person.name;
+    Object.assign(person, payload);
+    if (oldName !== payload.name) renamePersonInRecords(oldName, payload.name, person.id);
+  } else {
+    if (personByName(payload.name)) {
+      alert("已有相同姓名的夥伴，請改用編輯原資料。");
+      return;
+    }
+    state.people.push({
+      id: personIdFromName(payload.name),
+      ...payload,
+      createdAt: now
+    });
+  }
+
+  saveState();
+  els.personDialog.close();
+  render();
+}
+
+function renamePersonInRecords(oldName, newName, personId) {
+  state.partners.forEach((record) => {
+    if (record.partnerName === oldName || record.personId === personId) {
+      record.partnerName = newName;
+      record.personId = personId;
+    }
+  });
+  state.weekly.forEach((goal) => {
+    if (goal.partnerName === oldName || goal.personId === personId) {
+      goal.partnerName = newName;
+      goal.personId = personId;
+    }
+  });
+}
+
+function togglePersonStatus(id) {
+  const person = personById(id);
+  if (!person) return;
+  person.status = person.status === "active" ? "inactive" : "active";
+  if (person.status === "inactive" && !person.exitDate) person.exitDate = isoDate(new Date());
+  person.updatedAt = new Date().toISOString();
+  saveState();
+  render();
+}
+
+function renderPeople() {
+  if (!els.peopleTable) return;
+  const status = els.peopleStatusFilter.value;
+  const query = els.peopleSearch.value.trim().toLowerCase();
+  const rows = sortedPeople(true).filter((person) => {
+    const matchStatus = status === "all" || person.status === status;
+    const haystack = `${person.name} ${person.branch} ${person.title} ${person.phone} ${person.email}`.toLowerCase();
+    return matchStatus && haystack.includes(query);
+  });
+
+  els.peopleTable.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>排序</th><th>姓名</th><th>店別</th><th>職稱</th><th>到職日</th><th>離職日</th><th>狀態</th><th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.length ? rows.map(personRowHtml).join("") : `<tr><td colspan="8">目前沒有符合條件的人員。</td></tr>`}
+      </tbody>
+    </table>
+  `;
+
+  els.peopleTable.querySelectorAll("[data-person-action]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const person = personById(button.dataset.personId);
+      if (button.dataset.personAction === "edit") openPersonDialog(person);
+      if (button.dataset.personAction === "toggle") togglePersonStatus(button.dataset.personId);
+    });
+  });
+}
+
+function personRowHtml(person) {
+  return `
+    <tr>
+      <td data-label="排序">${person.sort}</td>
+      <td data-label="姓名"><strong class="${person.status === "inactive" ? "inactive-name" : ""}">${escapeHtml(person.name)}</strong></td>
+      <td data-label="店別">${escapeHtml(person.branch)}</td>
+      <td data-label="職稱">${escapeHtml(person.title)}</td>
+      <td data-label="到職日">${person.hireDate || "-"}</td>
+      <td data-label="離職日">${person.exitDate || "-"}</td>
+      <td data-label="狀態"><span class="status-pill ${person.status}">${person.status === "active" ? "在職" : "離職／停用"}</span></td>
+      <td data-label="操作">
+        <div class="row-actions">
+          <button type="button" data-person-action="edit" data-person-id="${person.id}">編輯</button>
+          <button class="${person.status === "active" ? "danger-action" : ""}" type="button" data-person-action="toggle" data-person-id="${person.id}">
+            ${person.status === "active" ? "設為離職" : "恢復在職"}
+          </button>
+        </div>
+      </td>
+    </tr>
   `;
 }
 
@@ -786,7 +1117,8 @@ function drawProfitChart(svg, rows) {
   const width = 720;
   const height = 280;
   const pad = 42;
-  const max = Math.max(1, ...rows.map(calcProfit), ...rows.map((row) => row.agentCount ? monthlyPartnerRevenue(row.month) / row.agentCount : 0));
+  const agentCount = activePeople().length;
+  const max = Math.max(1, ...rows.map(calcProfit), ...rows.map((row) => agentCount ? monthlyPartnerRevenue(row.month) / agentCount : 0));
   const barWidth = (width - pad * 2) / 12 * 0.58;
   const y = (value) => height - pad - (value / max) * (height - pad * 2);
   svg.innerHTML = chartBase(width, height, pad, max) + rows.map((row, index) => {
@@ -854,6 +1186,15 @@ function signedMoney(value) {
 function numberFromText(value) {
   const match = String(value || "").match(/-?\d+(\.\d+)?/);
   return match ? Number(match[0]) : 0;
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
 function normalizeDate(value) {
@@ -928,7 +1269,7 @@ function exportCompanyReport() {
 
 function exportPartnersReport() {
   const month = Number(els.partnerMonth.value);
-  const rows = partners.map((partnerName) => findPartnerRecord(partnerName, month) || defaultPartnerRecord(partnerName, month));
+  const rows = peopleForReports(state.year).map((partnerName) => findPartnerRecord(partnerName, month) || defaultPartnerRecord(partnerName, month));
   const table = `
     <table>
       <thead><tr><th>夥伴</th><th>年度目標</th><th>本月業績</th><th>進案</th><th>收斡</th><th>成交</th><th>年度達成率</th><th>去年同期差</th><th>最近成交</th></tr></thead>
