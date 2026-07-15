@@ -36,6 +36,10 @@ const els = {
   partnerImportFile: document.querySelector("#partnerImportFile"),
   partnerImportStatus: document.querySelector("#partnerImportStatus"),
   partnerForm: document.querySelector("#partnerForm"),
+  openPartnerFormBtn: document.querySelector("#openPartnerFormBtn"),
+  closePartnerFormBtn: document.querySelector("#closePartnerFormBtn"),
+  partnerFormBackdrop: document.querySelector("#partnerFormBackdrop"),
+  partnerFormContext: document.querySelector("#partnerFormContext"),
   annualRevenueTarget: document.querySelector("#annualRevenueTarget"),
   actualRevenue: document.querySelector("#actualRevenue"),
   actualListings: document.querySelector("#actualListings"),
@@ -359,6 +363,12 @@ function bindEvents() {
   els.partnerName.addEventListener("change", () => {
     fillPartnerForm();
     renderPartners();
+  });
+  if (els.openPartnerFormBtn) els.openPartnerFormBtn.addEventListener("click", openPartnerFormDrawer);
+  if (els.closePartnerFormBtn) els.closePartnerFormBtn.addEventListener("click", closePartnerFormDrawer);
+  if (els.partnerFormBackdrop) els.partnerFormBackdrop.addEventListener("click", closePartnerFormDrawer);
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && els.partnerForm?.classList.contains("drawer-open")) closePartnerFormDrawer();
   });
   els.partnerForm.addEventListener("submit", savePartnerRecord);
   els.partnerImportFile.addEventListener("change", importPartnerExcel);
@@ -803,6 +813,31 @@ function fillPartnerForm() {
   els.actualListings.value = record?.actualListings || 0;
   els.actualOffers.value = record?.actualOffers || 0;
   els.actualClosings.value = record?.actualClosings || 0;
+  updatePartnerFormContext();
+}
+
+function updatePartnerFormContext() {
+  if (!els.partnerFormContext) return;
+  const monthText = els.partnerMonth.options[els.partnerMonth.selectedIndex]?.text || "";
+  const partnerText = els.partnerName.options[els.partnerName.selectedIndex]?.text || "";
+  els.partnerFormContext.textContent = [monthText, partnerText].filter(Boolean).join("｜");
+}
+
+function openPartnerFormDrawer() {
+  if (!isCompactView()) return;
+  fillPartnerForm();
+  els.partnerForm.classList.add("drawer-open");
+  els.partnerFormBackdrop?.classList.add("visible");
+  els.openPartnerFormBtn?.setAttribute("aria-expanded", "true");
+  document.body.classList.add("drawer-active");
+  window.setTimeout(() => els.annualRevenueTarget?.focus(), 180);
+}
+
+function closePartnerFormDrawer() {
+  els.partnerForm?.classList.remove("drawer-open");
+  els.partnerFormBackdrop?.classList.remove("visible");
+  els.openPartnerFormBtn?.setAttribute("aria-expanded", "false");
+  document.body.classList.remove("drawer-active");
 }
 
 function findPartnerRecord(name = els.partnerName.value, month = Number(els.partnerMonth.value), year = state.year) {
@@ -861,6 +896,7 @@ function savePartnerRecord(event) {
 
   saveState();
   render();
+  closePartnerFormDrawer();
 }
 
 function importPartnerExcel(event) {

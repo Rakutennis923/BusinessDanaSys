@@ -119,8 +119,19 @@
           夥伴
           <select id="partnerName"></select>
         </label>
+        <button id="openPartnerFormBtn" class="primary partner-form-trigger" type="button" aria-controls="partnerForm" aria-expanded="false">
+          輸入／修改夥伴績效
+        </button>
       </div>
+      <div id="partnerFormBackdrop" class="partner-form-backdrop" aria-hidden="true"></div>
       <form id="partnerForm" class="entry-panel partner-form">
+        <div class="partner-form-drawer-head">
+          <div>
+            <strong>輸入夥伴績效</strong>
+            <span id="partnerFormContext"></span>
+          </div>
+          <button id="closePartnerFormBtn" class="drawer-close" type="button" aria-label="關閉績效輸入視窗">×</button>
+        </div>
         <label>年度業績目標（萬元）<input id="annualRevenueTarget" type="number" min="0" step="0.01"></label>
         <label>本月業績（萬元）<input id="actualRevenue" type="number" min="0" step="0.01"></label>
         <label>進案<input id="actualListings" type="number" min="0" step="1"></label>

@@ -312,6 +312,11 @@ td input { min-width: 92px; }
 }
 
 .partner-form { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.partner-form-trigger,
+.partner-form-backdrop,
+.partner-form-drawer-head {
+  display: none;
+}
 .weekly-form { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 .person-form { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .wide-field { grid-column: 1 / -1; }
@@ -750,6 +755,91 @@ dialog::backdrop {
   .metric-row,
   .import-panel {
     grid-template-columns: 1fr;
+  }
+
+  .partner-form-trigger {
+    display: block;
+    width: 100%;
+    align-self: end;
+  }
+
+  .partner-form-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    background: rgba(18, 35, 31, 0.48);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.22s ease, visibility 0.22s ease;
+  }
+
+  .partner-form-backdrop.visible {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  #partners .partner-form {
+    display: grid;
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100;
+    width: min(90vw, 390px);
+    margin: 0;
+    padding: 18px 16px calc(24px + env(safe-area-inset-bottom));
+    border: 0;
+    border-radius: 18px 0 0 18px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    align-content: start;
+    transform: translateX(105%);
+    visibility: hidden;
+    transition: transform 0.25s ease, visibility 0.25s ease;
+    box-shadow: -10px 0 30px rgba(20, 52, 44, 0.2);
+  }
+
+  #partners .partner-form.drawer-open {
+    transform: translateX(0);
+    visibility: visible;
+  }
+
+  .partner-form-drawer-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .partner-form-drawer-head strong {
+    display: block;
+    font-size: 20px;
+  }
+
+  .partner-form-drawer-head span {
+    display: block;
+    margin-top: 3px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .drawer-close {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+    padding: 0;
+    border-radius: 50%;
+    font-size: 30px;
+    line-height: 1;
+  }
+
+  body.drawer-active {
+    overflow: hidden;
   }
 
   .table-wrap {
