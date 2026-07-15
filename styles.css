@@ -488,6 +488,71 @@ dialog::backdrop {
   min-width: 980px;
 }
 
+.people-card-list {
+  display: none;
+}
+
+.person-card,
+.people-empty {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.person-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.person-card-head strong {
+  display: block;
+  font-size: 18px;
+}
+
+.person-card-head span:not(.status-pill) {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.person-card-info {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.person-card-info div {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px;
+  min-width: 0;
+}
+
+.person-card-info dt {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.person-card-info dd {
+  margin: 3px 0 0;
+  overflow-wrap: anywhere;
+  font-weight: 800;
+}
+
+.people-empty {
+  color: var(--muted);
+  font-weight: 800;
+  text-align: center;
+}
+
 .compact-only { display: none; }
 
 .link-button {
@@ -562,6 +627,20 @@ dialog::backdrop {
     border: 0;
     background: transparent;
     overflow: visible;
+  }
+
+  .people-table {
+    border: 0;
+    background: transparent;
+  }
+
+  .people-table-desktop {
+    display: none;
+  }
+
+  .people-card-list {
+    display: grid;
+    gap: 10px;
   }
 
   table, thead, tbody, tr, td {
@@ -677,6 +756,10 @@ dialog::backdrop {
     border: 0;
     background: transparent;
     overflow: visible;
+  }
+
+  .person-card-info {
+    grid-template-columns: 1fr;
   }
 
   table, thead, tbody, tr, td {

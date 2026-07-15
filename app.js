@@ -1328,16 +1328,21 @@ function renderPeople() {
   });
 
   els.peopleTable.innerHTML = `
-    <table>
-      <thead>
-        <tr>
-          <th>排序</th><th>姓名</th><th>店別</th><th>職稱</th><th>到職日</th><th>離職日</th><th>狀態</th><th>操作</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${rows.length ? rows.map(personRowHtml).join("") : `<tr><td colspan="8">目前沒有符合條件的人員。</td></tr>`}
-      </tbody>
-    </table>
+    <div class="people-table-desktop">
+      <table>
+        <thead>
+          <tr>
+            <th>排序</th><th>姓名</th><th>店別</th><th>職稱</th><th>到職日</th><th>離職日</th><th>狀態</th><th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.length ? rows.map(personRowHtml).join("") : `<tr><td colspan="8">目前沒有符合條件的人員。</td></tr>`}
+        </tbody>
+      </table>
+    </div>
+    <div class="people-card-list">
+      ${rows.length ? rows.map(personCardHtml).join("") : `<div class="people-empty">目前沒有符合條件的人員。</div>`}
+    </div>
   `;
 
 }
@@ -1361,6 +1366,32 @@ function personRowHtml(person) {
         </div>
       </td>
     </tr>
+  `;
+}
+
+function personCardHtml(person) {
+  return `
+    <article class="person-card">
+      <div class="person-card-head">
+        <div>
+          <strong class="${person.status === "inactive" ? "inactive-name" : ""}">${escapeHtml(person.name)}</strong>
+          <span>${escapeHtml(person.branch)}｜${escapeHtml(person.title)}</span>
+        </div>
+        <span class="status-pill ${person.status}">${person.status === "active" ? "在職" : "離職／停用"}</span>
+      </div>
+      <dl class="person-card-info">
+        <div><dt>排序</dt><dd>${person.sort}</dd></div>
+        <div><dt>到職日</dt><dd>${person.hireDate || "-"}</dd></div>
+        <div><dt>離職日</dt><dd>${person.exitDate || "-"}</dd></div>
+        <div><dt>聯絡</dt><dd>${escapeHtml(person.phone || person.email || "-")}</dd></div>
+      </dl>
+      <div class="row-actions">
+        <button type="button" data-person-action="edit" data-person-id="${person.id}">編輯</button>
+        <button class="${person.status === "active" ? "danger-action" : ""}" type="button" data-person-action="toggle" data-person-id="${person.id}">
+          ${person.status === "active" ? "設為離職" : "恢復在職"}
+        </button>
+      </div>
+    </article>
   `;
 }
 
