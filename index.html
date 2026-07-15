@@ -91,6 +91,7 @@
           匯入月營運 Excel
           <input id="companyImportFile" type="file" accept=".xlsx,.xls,.html,.csv">
         </label>
+        <button id="companyImportBtn" type="button">讀取資料</button>
         <span id="companyImportStatus">尚未匯入</span>
       </div>
       <div id="companyTable" class="table-wrap"></div>
@@ -185,6 +186,19 @@
       <div id="peopleTable" class="table-wrap people-table"></div>
     </section>
   </main>
+
+  <dialog id="overviewDetailDialog">
+    <div class="person-dialog">
+      <div class="dialog-head">
+        <h2 id="overviewDetailTitle">年度業績表</h2>
+        <button class="icon-button" id="overviewDetailClose" type="button" aria-label="關閉">×</button>
+      </div>
+      <div id="overviewDetailBody" class="table-wrap"></div>
+      <div class="dialog-actions">
+        <button id="overviewDetailCloseBottom" type="button">關閉</button>
+      </div>
+    </div>
+  </dialog>
 
   <dialog id="personDialog">
     <form id="personForm" method="dialog" class="person-dialog">

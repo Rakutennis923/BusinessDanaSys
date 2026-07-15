@@ -57,6 +57,11 @@ const els = {
   peopleStatusFilter: document.querySelector("#peopleStatusFilter"),
   peopleSearch: document.querySelector("#peopleSearch"),
   peopleTable: document.querySelector("#peopleTable"),
+  overviewDetailDialog: document.querySelector("#overviewDetailDialog"),
+  overviewDetailTitle: document.querySelector("#overviewDetailTitle"),
+  overviewDetailBody: document.querySelector("#overviewDetailBody"),
+  overviewDetailClose: document.querySelector("#overviewDetailClose"),
+  overviewDetailCloseBottom: document.querySelector("#overviewDetailCloseBottom"),
   personDialog: document.querySelector("#personDialog"),
   personDialogTitle: document.querySelector("#personDialogTitle"),
   personId: document.querySelector("#personId"),
@@ -384,6 +389,9 @@ function bindEvents() {
   }
   if (els.peopleStatusFilter) els.peopleStatusFilter.addEventListener("change", renderPeople);
   if (els.peopleSearch) els.peopleSearch.addEventListener("input", renderPeople);
+  [els.overviewDetailClose, els.overviewDetailCloseBottom].forEach((button) => {
+    if (button) button.addEventListener("click", () => els.overviewDetailDialog.close());
+  });
   window.addEventListener("resize", () => {
     renderCompanyTable();
     renderOverviewPartnerTable();
@@ -591,30 +599,7 @@ function renderOverviewPartnerTable() {
       ? window.selectedOverviewPartner
       : rows[0]?.partnerName || activePartnerNames()[0];
     window.selectedOverviewPartner = selected;
-    const detail = rows.find((row) => row.partnerName === selected) || rows[0];
-    const detailHtml = detail ? `
-      <table class="overview-detail-table">
-        <thead>
-          <tr>
-            <th>${annualRowName(detail)} 年度業績表</th><th>業績</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${detail.months.map((value, index) => `
-            <tr>
-              <td data-label="月份">${index + 1}月</td>
-              <td data-label="業績"><strong>${money(value)}萬</strong></td>
-            </tr>
-          `).join("")}
-          <tr class="total-row">
-            <td data-label="月份"><strong>年度總計</strong></td>
-            <td data-label="業績"><strong>${money(detail.total)}萬</strong></td>
-          </tr>
-        </tbody>
-      </table>
-    ` : "";
-
-    els.overviewPartnerDetail.innerHTML = detailHtml;
+    els.overviewPartnerDetail.innerHTML = "";
 
     els.overviewPartnerTable.innerHTML = `
       <table class="rank-table">
@@ -640,7 +625,7 @@ function renderOverviewPartnerTable() {
         const row = rows[Number(button.dataset.overviewIndex)];
         window.selectedOverviewPartner = row?.partnerName || selected;
         renderOverviewPartnerTable();
-        els.overviewPartnerDetail.scrollIntoView({ behavior: "smooth", block: "start" });
+        openOverviewDetailDialog(row);
       });
     });
     return;
@@ -695,6 +680,34 @@ function annualPartnerRows() {
   }
 
   return activeRows;
+}
+
+function openOverviewDetailDialog(row) {
+  if (!row || !els.overviewDetailDialog) return;
+
+  els.overviewDetailTitle.textContent = `${stripHtml(annualRowName(row))} 年度業績表`;
+  els.overviewDetailBody.innerHTML = `
+    <table class="overview-detail-table">
+      <thead>
+        <tr>
+          <th>月份</th><th>業績</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${row.months.map((value, index) => `
+          <tr>
+            <td data-label="月份">${index + 1}月</td>
+            <td data-label="業績"><strong>${money(value)}萬</strong></td>
+          </tr>
+        `).join("")}
+        <tr class="total-row">
+          <td data-label="月份"><strong>年度總計</strong></td>
+          <td data-label="業績"><strong>${money(row.total)}萬</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  `;
+  els.overviewDetailDialog.showModal();
 }
 
 function annualPartnerRow(partnerName, isAggregate) {
@@ -1053,20 +1066,19 @@ function defaultPartnerRecord(partnerName, month) {
 function partnerCardHtml(record, selectedMonth) {
   const annualTarget = num(record.annualRevenueTarget) || latestAnnualTarget(record.partnerName);
   const ytdRevenue = partnerYtdRevenue(record.partnerName, selectedMonth, state.year);
-  const lastYtdRevenue = partnerYtdRevenue(record.partnerName, selectedMonth, state.year - 1);
+  const lastAnnualRevenue = partnerAnnualRevenue(record.partnerName, state.year - 1);
   const achievement = rate(ytdRevenue, annualTarget);
-  const yoyGap = ytdRevenue - lastYtdRevenue;
-  const latestClosing = latestClosingMonth(record.partnerName);
+  const latestRevenue = latestRevenueMonth(record.partnerName);
   const cardClass = achievement <= 50 ? "card-low" : achievement < 80 ? "card-mid" : "card-high";
 
   return `
     <article class="partner-card ${cardClass}">
       <h3>${escapeHtml(record.partnerName)}${personStatusLabel(record.partnerName)}</h3>
-      <p class="advice">年度業績目標 ${money(annualTarget)}萬，目前達成 ${achievement}%</p>
+      <p class="advice">年度業績目標 ${money(annualTarget)}萬，目前${money(ytdRevenue)}萬達成 ${achievement}%</p>
       <div class="metric-row">
-        ${metric("去年同期差", `${signedMoney(yoyGap)}萬`, `去年同期 ${money(lastYtdRevenue)}萬`)}
+        ${metric("去年總業績", `${money(lastAnnualRevenue)}萬`, `${state.year - 1} 年`)}
         ${metric("本月業績", `${money(record.actualRevenue)}萬`, `${selectedMonth}月`)}
-        ${metric("最近成交", latestClosing || "尚無", "年/月")}
+        ${metric("最近成交", latestRevenue || "尚無", "年/月")}
       </div>
       <div class="metric-row">
         ${metric("進案", `${record.actualListings}件`, "本月")}
@@ -1074,7 +1086,7 @@ function partnerCardHtml(record, selectedMonth) {
         ${metric("成交", `${record.actualClosings}件`, "本月")}
       </div>
       <div class="progress"><span style="--value:${Math.min(100, achievement)}%"></span></div>
-      <p class="advice">${partnerAdvice(record, achievement, yoyGap)}</p>
+      <p class="advice">${partnerAdvice(record, achievement, ytdRevenue - partnerYtdRevenue(record.partnerName, selectedMonth, state.year - 1))}</p>
     </article>
   `;
 }
@@ -1085,11 +1097,21 @@ function partnerYtdRevenue(name, month, year) {
     .reduce((sum, record) => sum + num(record.actualRevenue), 0);
 }
 
-function latestClosingMonth(name) {
+function partnerAnnualRevenue(name, year) {
+  return state.partners
+    .filter((record) => record.year === year && record.partnerName === name)
+    .reduce((sum, record) => sum + num(record.actualRevenue), 0);
+}
+
+function latestRevenueMonth(name) {
   const record = [...state.partners]
-    .filter((item) => item.partnerName === name && num(item.actualClosings) > 0)
+    .filter((item) => item.partnerName === name && num(item.actualRevenue) > 0)
     .sort((a, b) => (b.year - a.year) || (b.month - a.month))[0];
   return record ? `${record.year}/${String(record.month).padStart(2, "0")}` : "";
+}
+
+function latestClosingMonth(name) {
+  return latestRevenueMonth(name);
 }
 
 function saveWeeklyGoal(event) {
@@ -1475,6 +1497,12 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function stripHtml(value) {
+  const div = document.createElement("div");
+  div.innerHTML = String(value ?? "");
+  return div.textContent || div.innerText || "";
 }
 
 function normalizeDate(value) {

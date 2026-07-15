@@ -318,7 +318,7 @@ td input { min-width: 92px; }
 
 .import-panel {
   display: grid;
-  grid-template-columns: minmax(260px, 1fr) auto;
+  grid-template-columns: minmax(260px, 1fr) auto auto;
   gap: 12px;
   align-items: end;
   padding: 14px;
@@ -453,6 +453,15 @@ dialog::backdrop {
 
 .person-dialog {
   padding: 18px;
+}
+
+#overviewDetailDialog .person-dialog {
+  max-height: min(760px, calc(100vh - 28px));
+  overflow: auto;
+}
+
+#overviewDetailBody {
+  margin-top: 12px;
 }
 
 .dialog-head,
