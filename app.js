@@ -985,9 +985,14 @@ function normalizeHeader(header) {
 }
 
 function partnerRecordFromRow(headers, row) {
+  const findIndex = (...names) => headers.findIndex((header) => names.some((name) => header.includes(name)));
   const get = (...names) => {
-    const index = headers.findIndex((header) => names.some((name) => header.includes(name)));
+    const index = findIndex(...names);
     return index >= 0 ? row[index] : "";
+  };
+  const getOptionalNumber = (...names) => {
+    const index = findIndex(...names);
+    return index >= 0 ? numberFromText(row[index]) : undefined;
   };
 
   const dateText = get("日期", "月份", "年月");
@@ -996,11 +1001,11 @@ function partnerRecordFromRow(headers, row) {
     year: numberFromText(get("年度", "年份")) || yearFromText(dateText) || state.year,
     month: parsedMonth >= 1 && parsedMonth <= 12 ? parsedMonth : Number(els.partnerMonth.value),
     partnerName: get("夥伴", "姓名", "業務"),
-    annualRevenueTarget: numberFromText(get("年度業績目標", "年度目標", "業績目標")) || 1200,
-    actualRevenue: numberFromText(get("本月業績", "實際業績", "業績")),
-    actualListings: numberFromText(get("進案")),
-    actualOffers: numberFromText(get("收斡", "斡旋")),
-    actualClosings: numberFromText(get("成交件數", "成交"))
+    annualRevenueTarget: getOptionalNumber("年度業績目標", "年度目標", "業績目標"),
+    actualRevenue: getOptionalNumber("本月業績", "實際業績", "當月業績"),
+    actualListings: getOptionalNumber("進案"),
+    actualOffers: getOptionalNumber("收斡", "斡旋"),
+    actualClosings: getOptionalNumber("成交件數", "成交")
   };
 }
 
@@ -1009,10 +1014,21 @@ function upsertPartnerRecords(records) {
     const person = ensureHistoricalPerson(record.partnerName);
     record.personId = record.personId || person?.id || "";
     const existing = state.partners.find((item) => item.year === record.year && item.month === record.month && item.partnerName === record.partnerName);
+    const patch = Object.fromEntries(Object.entries(record).filter(([, value]) => value !== undefined));
     if (existing) {
-      Object.assign(existing, record);
+      Object.assign(existing, patch);
     } else {
-      state.partners.push(record);
+      state.partners.push({
+        year: record.year,
+        month: record.month,
+        partnerName: record.partnerName,
+        personId: record.personId,
+        annualRevenueTarget: record.annualRevenueTarget ?? latestAnnualTarget(record.partnerName),
+        actualRevenue: record.actualRevenue ?? 0,
+        actualListings: record.actualListings ?? 0,
+        actualOffers: record.actualOffers ?? 0,
+        actualClosings: record.actualClosings ?? 0
+      });
     }
   });
 }
