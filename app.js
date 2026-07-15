@@ -519,8 +519,12 @@ function monthlyPartnerClosings(month) {
   return monthlyPartnerRows(month).reduce((sum, record) => sum + num(record.actualClosings), 0);
 }
 
+function hasPartnerActivity(record) {
+  return num(record.actualRevenue) || num(record.actualListings) || num(record.actualOffers) || num(record.actualClosings);
+}
+
 function monthlyAgentCount(month) {
-  const names = new Set(monthlyPartnerRows(month).map((record) => record.partnerName).filter(Boolean));
+  const names = new Set(monthlyPartnerRows(month).filter(hasPartnerActivity).map((record) => record.partnerName).filter(Boolean));
   return names.size || activePeople().length;
 }
 
@@ -810,6 +814,27 @@ function latestAnnualTarget(name) {
   return record?.annualRevenueTarget || 1200;
 }
 
+function applyAnnualTargetFromMonth(partnerName, startMonth, target) {
+  const person = personByName(partnerName);
+  for (let month = startMonth; month <= 12; month += 1) {
+    let record = findPartnerRecord(partnerName, month, state.year);
+    if (!record) {
+      record = {
+        year: state.year,
+        month,
+        partnerName,
+        personId: person?.id || "",
+        actualRevenue: 0,
+        actualListings: 0,
+        actualOffers: 0,
+        actualClosings: 0
+      };
+      state.partners.push(record);
+    }
+    record.annualRevenueTarget = target;
+  }
+}
+
 function savePartnerRecord(event) {
   event.preventDefault();
   const month = Number(els.partnerMonth.value);
@@ -824,13 +849,15 @@ function savePartnerRecord(event) {
     state.partners.push(record);
   }
 
+  const annualTarget = num(els.annualRevenueTarget.value);
   Object.assign(record, {
-    annualRevenueTarget: num(els.annualRevenueTarget.value),
+    annualRevenueTarget: annualTarget,
     actualRevenue: num(els.actualRevenue.value),
     actualListings: num(els.actualListings.value),
     actualOffers: num(els.actualOffers.value),
     actualClosings: num(els.actualClosings.value)
   });
+  applyAnnualTargetFromMonth(partnerName, month, annualTarget);
 
   saveState();
   render();
