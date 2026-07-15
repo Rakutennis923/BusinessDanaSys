@@ -133,6 +133,10 @@ button {
   margin-bottom: 18px;
 }
 
+.mobile-year-picker {
+  display: none;
+}
+
 .view { display: none; }
 .view.active { display: block; }
 
@@ -570,6 +574,95 @@ dialog::backdrop {
   text-decoration: underline;
 }
 
+/* 夥伴績效輸入抽屜：涵蓋手機、橫向手機與小型平板。 */
+@media (max-width: 1024px) {
+  .partner-form-trigger {
+    display: block;
+    width: 100%;
+    align-self: end;
+  }
+
+  .partner-form-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    background: rgba(18, 35, 31, 0.48);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.22s ease, visibility 0.22s ease;
+  }
+
+  .partner-form-backdrop.visible {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  #partners .partner-form {
+    display: grid;
+    grid-template-columns: 1fr;
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100;
+    width: min(90vw, 390px);
+    margin: 0;
+    padding: 18px 16px calc(24px + env(safe-area-inset-bottom));
+    border: 0;
+    border-radius: 18px 0 0 18px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    align-content: start;
+    transform: translateX(105%);
+    visibility: hidden;
+    transition: transform 0.25s ease, visibility 0.25s ease;
+    box-shadow: -10px 0 30px rgba(20, 52, 44, 0.2);
+  }
+
+  #partners .partner-form.drawer-open {
+    transform: translateX(0);
+    visibility: visible;
+  }
+
+  .partner-form-drawer-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .partner-form-drawer-head strong {
+    display: block;
+    font-size: 20px;
+  }
+
+  .partner-form-drawer-head span {
+    display: block;
+    margin-top: 3px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .drawer-close {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+    padding: 0;
+    border-radius: 50%;
+    font-size: 30px;
+    line-height: 1;
+  }
+
+  body.drawer-active {
+    overflow: hidden;
+  }
+}
+
 @media (max-width: 1080px) {
   .kpi-grid, .partner-grid, .weekly-grid, .chart-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -721,6 +814,42 @@ dialog::backdrop {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     padding: 8px 0;
     background: var(--bg);
+  }
+
+  .app-header .year-picker {
+    display: none;
+  }
+
+  .tabs .mobile-year-picker {
+    display: block;
+    width: 100%;
+    margin: 0;
+  }
+
+  .tabs .mobile-year-picker label {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 5px;
+    min-height: 46px;
+    height: 100%;
+    padding: 0 8px 0 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 900;
+  }
+
+  .tabs .mobile-year-picker select {
+    height: 38px;
+    padding: 0 2px;
+    border: 0;
+    background: transparent;
+    color: var(--ink);
+    font-size: 16px;
+    font-weight: 900;
   }
 
   .tab {

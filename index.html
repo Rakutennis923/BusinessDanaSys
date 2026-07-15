@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>太平洋房屋 友成大湳店 業務行政系統</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=20260715-4">
 </head>
 <body>
   <main class="shell">
@@ -29,6 +29,11 @@
       <button class="tab" type="button" data-view="partners">夥伴績效</button>
       <button class="tab" type="button" data-view="weekly">週目標</button>
       <button class="tab" type="button" data-view="people">人事管理</button>
+      <div class="mobile-year-picker">
+        <label for="mobileYearSelect">年度
+          <select id="mobileYearSelect" aria-label="選擇年度"></select>
+        </label>
+      </div>
     </nav>
 
     <section id="overview" class="view active">
@@ -243,6 +248,6 @@
   </dialog>
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="app.js"></script>
+  <script src="app.js?v=20260715-4"></script>
 </body>
 </html>

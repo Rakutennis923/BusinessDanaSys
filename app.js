@@ -15,6 +15,7 @@ let state = loadState();
 
 const els = {
   yearSelect: document.querySelector("#yearSelect"),
+  mobileYearSelect: document.querySelector("#mobileYearSelect"),
   annualTargetInput: document.querySelector("#annualTargetInput"),
   annualTargetDisplay: document.querySelector("#annualTargetDisplay"),
   overviewKpis: document.querySelector("#overviewKpis"),
@@ -290,8 +291,10 @@ function seedLastYear(year) {
 
 function setupSelects() {
   const currentYear = new Date().getFullYear();
-  els.yearSelect.innerHTML = Array.from({ length: currentYear - 2020 + 2 }, (_, index) => 2020 + index)
+  const yearOptions = Array.from({ length: currentYear - 2020 + 2 }, (_, index) => 2020 + index)
     .map((year) => `<option ${year === state.year ? "selected" : ""}>${year}</option>`).join("");
+  els.yearSelect.innerHTML = yearOptions;
+  if (els.mobileYearSelect) els.mobileYearSelect.innerHTML = yearOptions;
   els.partnerMonth.innerHTML = monthLabels.map((label, i) => `<option value="${i + 1}">${label}</option>`).join("");
   if (els.companyMonthSelect) {
     els.companyMonthSelect.innerHTML = monthLabels.map((label, i) => `<option value="${i + 1}">${label}</option>`).join("");
@@ -332,13 +335,19 @@ function bindEvents() {
     tab.addEventListener("click", () => switchView(tab.dataset.view));
   });
 
-  els.yearSelect.addEventListener("change", () => {
-    state.year = Number(els.yearSelect.value);
+  const changeYear = (value) => {
+    state.year = Number(value);
+    els.yearSelect.value = String(state.year);
+    if (els.mobileYearSelect) els.mobileYearSelect.value = String(state.year);
     state.company = ensureCompanyYear(state.year);
     ensureAnnualTarget(state.year);
     saveState();
     render();
-  });
+  };
+  els.yearSelect.addEventListener("change", () => changeYear(els.yearSelect.value));
+  if (els.mobileYearSelect) {
+    els.mobileYearSelect.addEventListener("change", () => changeYear(els.mobileYearSelect.value));
+  }
 
   els.annualTargetInput.addEventListener("change", () => {
     state.annualTargets[state.year] = num(els.annualTargetInput.value);
@@ -504,7 +513,7 @@ function switchView(viewId) {
 }
 
 function isCompactView() {
-  return window.matchMedia("(max-width: 900px)").matches;
+  return window.matchMedia("(max-width: 1024px)").matches;
 }
 
 function companyRows() {
