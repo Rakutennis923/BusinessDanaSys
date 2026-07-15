@@ -516,6 +516,10 @@ function isCompactView() {
   return window.matchMedia("(max-width: 1024px)").matches;
 }
 
+function isPhoneView() {
+  return window.matchMedia("(max-width: 640px)").matches;
+}
+
 function companyRows() {
   return state.company.filter((row) => row.year === state.year).sort((a, b) => a.month - b.month);
 }
@@ -601,7 +605,7 @@ function renderCompanyTable() {
       </thead>
       <tbody>
         ${rows.map(companyRowHtml).join("")}
-        ${companyTotalRowHtml(rows)}
+        ${isPhoneView() ? "" : companyTotalRowHtml(rows)}
       </tbody>
     </table>
   `;
