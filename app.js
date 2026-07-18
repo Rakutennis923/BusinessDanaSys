@@ -92,6 +92,12 @@ async function init() {
   bindEvents();
   render();
   await loadCloudState();
+  window.setInterval(() => {
+    if (document.visibilityState === "visible") loadCloudState();
+  }, 30000);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") loadCloudState();
+  });
 }
 
 function loadState() {
@@ -1961,9 +1967,25 @@ function downloadExcel(filename, html) {
   function normalizeOffer(item) {
     return {
       ...item,
+      startDate: normalizeOfferDate(item.startDate),
+      endDate: normalizeOfferDate(item.endDate),
       serviceFeeUnit: item.serviceFeeUnit || "萬元",
       offerStatus: item.offerStatus || (item.closedAt ? "closed" : item.withdrawnAt ? "withdrawn" : "active")
     };
+  }
+
+  function normalizeOfferDate(value) {
+    const text = String(value || "").trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text;
+    const date = new Date(text);
+    if (Number.isNaN(date.getTime())) return text.slice(0, 10);
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Taipei", year: "numeric", month: "2-digit", day: "2-digit"
+    }).formatToParts(date).reduce((result, part) => {
+      if (part.type !== "literal") result[part.type] = part.value;
+      return result;
+    }, {});
+    return parts.year + "-" + parts.month + "-" + parts.day;
   }
 
   function persistOffers() {
