@@ -1937,7 +1937,7 @@ function downloadExcel(filename, html) {
     bottomPrice: document.querySelector("#offerBottomPrice"), hasClause: document.querySelector("#offerHasClause"), clauseField: document.querySelector("#offerClauseField"),
     clauseNote: document.querySelector("#offerClauseNote"), eighty: document.querySelector("#offerEightyPercent"), submitBtn: document.querySelector("#offerSubmitBtn"),
     cancelEdit: document.querySelector("#offerCancelEdit"), resetBtn: document.querySelector("#offerResetBtn"), cards: document.querySelector("#offerCards"),
-    filters: document.querySelector("#offerFilters"), activeCount: document.querySelector("#offerActiveCount"), urgentCount: document.querySelector("#offerUrgentCount"),
+    filters: document.querySelector("#offerFilters"), summary: document.querySelector("#offerSummary"), activeCount: document.querySelector("#offerActiveCount"), urgentCount: document.querySelector("#offerUrgentCount"),
     importFile: document.querySelector("#offerImportFile"), importStatus: document.querySelector("#offerImportStatus"), templateBtn: document.querySelector("#offerTemplateBtn")
   };
 
@@ -1946,6 +1946,7 @@ function downloadExcel(filename, html) {
   o.resetBtn.addEventListener("click", resetOfferForm);
   o.cancelEdit.addEventListener("click", resetOfferForm);
   o.filters.addEventListener("click", changeOfferFilter);
+  o.summary.addEventListener("click", changeOfferSummaryFilter);
   o.cards.addEventListener("click", handleOfferCardAction);
   o.importFile.addEventListener("change", importOfferExcel);
   o.templateBtn.addEventListener("click", downloadOfferTemplate);
@@ -2071,14 +2072,30 @@ function downloadExcel(filename, html) {
 
   function changeOfferFilter(event) {
     const button = event.target.closest("[data-offer-filter]"); if (!button) return;
-    currentFilter = button.dataset.offerFilter; archivePage = 0;
-    o.filters.querySelectorAll("button").forEach((item) => item.classList.toggle("active", item === button));
+    applyOfferFilter(button.dataset.offerFilter);
+  }
+
+  function changeOfferSummaryFilter(event) {
+    const button = event.target.closest("[data-offer-summary]"); if (!button) return;
+    applyOfferFilter(button.dataset.offerSummary);
+    document.querySelector("#offerCards")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function applyOfferFilter(filter) {
+    currentFilter = filter; archivePage = 0;
+    o.filters.querySelectorAll("button").forEach((button) => button.classList.toggle("active", button.dataset.offerFilter === filter));
+    o.summary.querySelectorAll("button").forEach((button) => {
+      const selected = button.dataset.offerSummary === filter;
+      button.classList.toggle("active", selected);
+      button.setAttribute("aria-pressed", String(selected));
+    });
     renderOffers();
   }
 
   function filteredOffers() {
     return records.filter((record) => {
       if (currentFilter === "active") return isActiveOffer(record);
+      if (currentFilter === "urgent") return isActiveOffer(record) && daysRemaining(record.endDate) <= 3;
       if (currentFilter === "expired") return isExpiredOffer(record);
       if (currentFilter === "withdrawn") return isRefunded(record);
       if (currentFilter === "closed") return isDeal(record);
@@ -2139,9 +2156,7 @@ function downloadExcel(filename, html) {
 
   function changeOfferStatus(id, status) {
     records = records.map((item) => item.id === id ? { ...item, offerStatus: status, withdrawnAt: status === "withdrawn" ? Date.now() : undefined, closedAt: status === "closed" ? Date.now() : undefined } : item);
-    currentFilter = status; archivePage = 0; persistOffers();
-    o.filters.querySelectorAll("button").forEach((button) => button.classList.toggle("active", button.dataset.offerFilter === status));
-    renderOffers();
+    persistOffers(); applyOfferFilter(status);
   }
 
   function editOffer(record) {

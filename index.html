@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>太平洋房屋 友成大湳店 業務行政系統</title>
-  <link rel="stylesheet" href="styles.css?v=20260718-5">
+  <link rel="stylesheet" href="styles.css?v=20260718-6">
 </head>
 <body>
   <main class="shell">
@@ -206,7 +206,7 @@
     <section id="offers" class="view offers-view">
       <div class="offer-hero">
         <div><p>太平洋房屋｜友成大湳店</p><h2>收斡旋管理</h2><span>建立卡片、掌握期限，重要斡旋不漏接。</span></div>
-        <div class="offer-summary"><div><span>有效案件</span><strong id="offerActiveCount">0</strong></div><div><span>3天內到期</span><strong id="offerUrgentCount">0</strong></div></div>
+        <div id="offerSummary" class="offer-summary"><button type="button" data-offer-summary="active" aria-pressed="false"><span>有效案件</span><strong id="offerActiveCount">0</strong></button><button type="button" data-offer-summary="urgent" aria-pressed="false"><span>3天內到期</span><strong id="offerUrgentCount">0</strong></button></div>
       </div>
 
       <section class="offer-panel offer-import-panel">
@@ -285,6 +285,6 @@
   </dialog>
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="app.js?v=20260718-5"></script>
+  <script src="app.js?v=20260718-6"></script>
 </body>
 </html>
