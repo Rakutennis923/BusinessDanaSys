@@ -1875,4 +1875,257 @@ function downloadExcel(filename, html) {
   URL.revokeObjectURL(url);
 }
 
+/* ==================== 收斡旋管理（三檔靜態版） ==================== */
+(function setupOfferManagement() {
+  const root = document.querySelector("#offers");
+  if (!root) return;
+
+  const KEY = "danan-offer-tracker-static-v1";
+  let records = loadOffers();
+  let currentFilter = "all";
+  let archivePage = 0;
+
+  const o = {
+    form: document.querySelector("#offerForm"), editId: document.querySelector("#offerEditId"), formTitle: document.querySelector("#offerFormTitle"),
+    startDate: document.querySelector("#offerStartDate"), endDate: document.querySelector("#offerEndDate"), caseName: document.querySelector("#offerCaseName"),
+    developer: document.querySelector("#offerDeveloper"), salesperson: document.querySelector("#offerSalesperson"), price: document.querySelector("#offerPrice"),
+    deposit: document.querySelector("#offerDeposit"), serviceFee: document.querySelector("#offerServiceFee"), serviceFeeUnit: document.querySelector("#offerServiceFeeUnit"),
+    bottomPrice: document.querySelector("#offerBottomPrice"), hasClause: document.querySelector("#offerHasClause"), clauseField: document.querySelector("#offerClauseField"),
+    clauseNote: document.querySelector("#offerClauseNote"), eighty: document.querySelector("#offerEightyPercent"), submitBtn: document.querySelector("#offerSubmitBtn"),
+    cancelEdit: document.querySelector("#offerCancelEdit"), resetBtn: document.querySelector("#offerResetBtn"), cards: document.querySelector("#offerCards"),
+    filters: document.querySelector("#offerFilters"), activeCount: document.querySelector("#offerActiveCount"), urgentCount: document.querySelector("#offerUrgentCount"),
+    importFile: document.querySelector("#offerImportFile"), importStatus: document.querySelector("#offerImportStatus"), templateBtn: document.querySelector("#offerTemplateBtn")
+  };
+
+  o.form.addEventListener("submit", saveOffer);
+  o.hasClause.addEventListener("change", toggleClause);
+  o.resetBtn.addEventListener("click", resetOfferForm);
+  o.cancelEdit.addEventListener("click", resetOfferForm);
+  o.filters.addEventListener("click", changeOfferFilter);
+  o.cards.addEventListener("click", handleOfferCardAction);
+  o.importFile.addEventListener("change", importOfferExcel);
+  o.templateBtn.addEventListener("click", downloadOfferTemplate);
+  renderOffers();
+
+  function loadOffers() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(KEY) || "[]");
+      return Array.isArray(saved) ? saved.map(normalizeOffer) : [];
+    } catch (error) { return []; }
+  }
+
+  function normalizeOffer(item) {
+    return {
+      ...item,
+      serviceFeeUnit: item.serviceFeeUnit || "萬元",
+      offerStatus: item.offerStatus || (item.closedAt ? "closed" : item.withdrawnAt ? "withdrawn" : "active")
+    };
+  }
+
+  function persistOffers() {
+    localStorage.setItem(KEY, JSON.stringify(records));
+  }
+
+  function todayStart() {
+    const date = new Date(); date.setHours(0, 0, 0, 0); return date;
+  }
+
+  function daysRemaining(endDate) {
+    return Math.round((new Date(endDate + "T00:00:00").getTime() - todayStart().getTime()) / 86400000);
+  }
+
+  function isRefunded(record) { return record.offerStatus === "withdrawn" || Boolean(record.withdrawnAt); }
+  function isDeal(record) { return record.offerStatus === "closed" || Boolean(record.closedAt); }
+  function isExpiredOffer(record) { return !isRefunded(record) && !isDeal(record) && daysRemaining(record.endDate) < 0; }
+  function isActiveOffer(record) { return !isRefunded(record) && !isDeal(record) && daysRemaining(record.endDate) >= 0; }
+
+  function statusTime(record) {
+    if (isDeal(record)) return Number(record.closedAt) || 0;
+    if (isRefunded(record)) return Number(record.withdrawnAt) || 0;
+    if (isExpiredOffer(record)) return new Date(record.endDate + "T00:00:00").getTime();
+    return 0;
+  }
+
+  function statusLabel(record) {
+    if (isDeal(record)) return "成交日期";
+    if (isRefunded(record)) return "退斡日期";
+    if (isExpiredOffer(record)) return "逾期日期";
+    return "";
+  }
+
+  function formatDateTime(time) {
+    if (!time) return "";
+    return new Intl.DateTimeFormat("zh-TW", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(time));
+  }
+
+  function isOlderThanSixMonths(record) {
+    const time = statusTime(record);
+    if (!time) return false;
+    const cutoff = todayStart(); cutoff.setMonth(cutoff.getMonth() - 6);
+    return time < cutoff.getTime();
+  }
+
+  function countdown(record) {
+    if (isDeal(record)) return "賀成交";
+    if (isRefunded(record)) return "已退斡旋｜斡旋停止";
+    const days = daysRemaining(record.endDate);
+    if (days > 0) return "剩 " + days + " 天";
+    if (days === 0) return "今天到期";
+    return "已逾期 " + Math.abs(days) + " 天";
+  }
+
+  function saveOffer(event) {
+    event.preventDefault();
+    if (o.endDate.value < o.startDate.value) { alert("收斡迄日不可早於起日。"); return; }
+    const old = records.find((item) => item.id === o.editId.value);
+    const record = normalizeOffer({
+      id: old?.id || makeOfferId(), startDate: o.startDate.value, endDate: o.endDate.value, caseName: o.caseName.value.trim(),
+      developer: o.developer.value.trim(), salesperson: o.salesperson.value.trim(), offerPrice: numberValue(o.price.value),
+      deposit: numberValue(o.deposit.value), serviceFee: numberValue(o.serviceFee.value), serviceFeeUnit: o.serviceFeeUnit.value,
+      bottomPrice: numberValue(o.bottomPrice.value), hasClause: o.hasClause.value, clauseNote: o.hasClause.value === "是" ? o.clauseNote.value.trim() : "",
+      reachesEightyPercent: o.eighty.value, createdAt: old?.createdAt || Date.now(), offerStatus: old?.offerStatus || "active",
+      withdrawnAt: old?.withdrawnAt, closedAt: old?.closedAt
+    });
+    records = old ? records.map((item) => item.id === old.id ? record : item) : [...records, record];
+    persistOffers(); resetOfferForm(); renderOffers();
+    document.querySelector("#offerCards")?.scrollIntoView({ behavior: "smooth" });
+  }
+
+  function resetOfferForm() {
+    o.form.reset(); o.editId.value = ""; o.formTitle.textContent = "新增收斡資料"; o.submitBtn.textContent = "建立收斡卡片";
+    o.cancelEdit.hidden = true; o.serviceFeeUnit.value = "萬元"; o.eighty.value = "未確認"; toggleClause();
+  }
+
+  function toggleClause() {
+    const show = o.hasClause.value === "是"; o.clauseField.hidden = !show; o.clauseNote.required = show;
+    if (!show) o.clauseNote.value = "";
+  }
+
+  function changeOfferFilter(event) {
+    const button = event.target.closest("[data-offer-filter]"); if (!button) return;
+    currentFilter = button.dataset.offerFilter; archivePage = 0;
+    o.filters.querySelectorAll("button").forEach((item) => item.classList.toggle("active", item === button));
+    renderOffers();
+  }
+
+  function filteredOffers() {
+    return records.filter((record) => {
+      if (currentFilter === "active") return isActiveOffer(record);
+      if (currentFilter === "expired") return isExpiredOffer(record);
+      if (currentFilter === "withdrawn") return isRefunded(record);
+      if (currentFilter === "closed") return isDeal(record);
+      return true;
+    }).sort((a, b) => {
+      const activeA = statusTime(a) === 0, activeB = statusTime(b) === 0;
+      if (activeA && activeB) return daysRemaining(a.endDate) - daysRemaining(b.endDate) || b.createdAt - a.createdAt;
+      if (activeA !== activeB) return activeA ? -1 : 1;
+      return statusTime(b) - statusTime(a) || b.createdAt - a.createdAt;
+    });
+  }
+
+  function renderOffers() {
+    const visible = filteredOffers();
+    const recent = visible.filter((record) => !isOlderThanSixMonths(record));
+    const archived = visible.filter(isOlderThanSixMonths);
+    archivePage = Math.min(archivePage, Math.max(archived.length - 1, 0));
+    o.activeCount.textContent = records.filter(isActiveOffer).length;
+    o.urgentCount.textContent = records.filter((record) => isActiveOffer(record) && daysRemaining(record.endDate) <= 3).length;
+    if (!visible.length) { o.cards.innerHTML = '<div class="offer-empty">目前沒有此分類的收斡卡片</div>'; return; }
+    const recentHtml = recent.map(offerCardHtml).join("");
+    const archiveHtml = archived.length ? archiveHtmlBlock(archived) : "";
+    o.cards.innerHTML = recentHtml + archiveHtml;
+  }
+
+  function offerCardHtml(record) {
+    const refunded = isRefunded(record), deal = isDeal(record), expired = isExpiredOffer(record), days = daysRemaining(record.endDate);
+    const cardClass = deal ? "closed" : refunded ? "withdrawn" : expired ? "expired" : days <= 3 ? "urgent" : "";
+    const label = deal ? "已成交" : refunded ? "已退斡旋" : expired ? "已逾期" : "進行中";
+    const statusDate = statusTime(record) ? '<div class="wide offer-status-date"><dt>' + statusLabel(record) + '</dt><dd>' + formatDateTime(statusTime(record)) + '</dd></div>' : "";
+    const stateButtons = !refunded && !deal ? '<button class="refund" data-offer-action="refund" data-id="' + record.id + '" type="button">退斡</button><button class="deal" data-offer-action="deal" data-id="' + record.id + '" type="button">賀成交</button>' : "";
+    return '<article class="offer-card ' + cardClass + '"><div class="offer-card-top"><div><small>收斡案名</small><h4>' + safe(record.caseName) + '</h4></div><span class="offer-status">' + label + '</span></div>' +
+      '<dl class="offer-details"><div class="wide"><dt>收斡期間</dt><dd>' + safe(record.startDate) + ' ～ ' + safe(record.endDate) + '</dd></div>' + statusDate +
+      detail("開發", record.developer) + detail("銷售", record.salesperson) + detail("出價／承購總價", amount(record.offerPrice) + " 萬") +
+      detail("本案底價", record.bottomPrice ? amount(record.bottomPrice) + " 萬" : "尚未提供") + detail("斡旋金", amount(record.deposit) + " 萬") +
+      detail("服務費", amount(record.serviceFee) + " " + (record.serviceFeeUnit || "萬元")) + detail("是否有但書", record.hasClause + (record.clauseNote ? "｜" + record.clauseNote : "")) +
+      detail("達開價八成", record.reachesEightyPercent || "未確認") + '</dl><div class="offer-countdown">' + countdown(record) + '</div>' +
+      '<div class="offer-card-actions"><button data-offer-action="edit" data-id="' + record.id + '" type="button">修改資料／延長時間</button>' + stateButtons +
+      '<button data-offer-action="delete" data-id="' + record.id + '" type="button">刪除</button></div></article>';
+  }
+
+  function archiveHtmlBlock(archived) {
+    return '<section class="offer-archive"><div class="offer-archive-head"><div><span>半年前歷史卡片</span><strong>第 ' + (archivePage + 1) + '／' + archived.length + ' 頁</strong></div><span>依狀態日期由近到遠</span></div>' +
+      offerCardHtml(archived[archivePage]) + '<div class="offer-archive-controls"><button data-offer-action="archive-prev" type="button" ' + (archivePage === 0 ? "disabled" : "") + '>上一頁</button><span>' + (archivePage + 1) + ' / ' + archived.length + '</span><button data-offer-action="archive-next" type="button" ' + (archivePage >= archived.length - 1 ? "disabled" : "") + '>下一頁</button></div></section>';
+  }
+
+  function handleOfferCardAction(event) {
+    const button = event.target.closest("[data-offer-action]"); if (!button) return;
+    const action = button.dataset.offerAction;
+    if (action === "archive-prev") { archivePage = Math.max(0, archivePage - 1); renderOffers(); return; }
+    if (action === "archive-next") { archivePage += 1; renderOffers(); return; }
+    const record = records.find((item) => item.id === button.dataset.id); if (!record) return;
+    if (action === "edit") editOffer(record);
+    if (action === "refund") changeOfferStatus(record.id, "withdrawn");
+    if (action === "deal") changeOfferStatus(record.id, "closed");
+    if (action === "delete" && confirm("確定要刪除這張收斡旋卡片嗎？")) { records = records.filter((item) => item.id !== record.id); persistOffers(); renderOffers(); }
+  }
+
+  function changeOfferStatus(id, status) {
+    records = records.map((item) => item.id === id ? { ...item, offerStatus: status, withdrawnAt: status === "withdrawn" ? Date.now() : undefined, closedAt: status === "closed" ? Date.now() : undefined } : item);
+    currentFilter = status; archivePage = 0; persistOffers();
+    o.filters.querySelectorAll("button").forEach((button) => button.classList.toggle("active", button.dataset.offerFilter === status));
+    renderOffers();
+  }
+
+  function editOffer(record) {
+    o.editId.value = record.id; o.startDate.value = record.startDate; o.endDate.value = record.endDate; o.caseName.value = record.caseName;
+    o.developer.value = record.developer; o.salesperson.value = record.salesperson; o.price.value = record.offerPrice; o.deposit.value = record.deposit;
+    o.serviceFee.value = record.serviceFee; o.serviceFeeUnit.value = record.serviceFeeUnit || "萬元"; o.bottomPrice.value = record.bottomPrice || "";
+    o.hasClause.value = record.hasClause || "否"; o.clauseNote.value = record.clauseNote || ""; o.eighty.value = record.reachesEightyPercent || "未確認";
+    o.formTitle.textContent = "編輯收斡資料"; o.submitBtn.textContent = "儲存修改"; o.cancelEdit.hidden = false; toggleClause();
+    root.scrollIntoView({ behavior: "smooth" });
+  }
+
+  function importOfferExcel(event) {
+    const file = event.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const workbook = XLSX.read(reader.result, { type: "array", cellDates: true });
+        const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: "" });
+        const imported = rows.map(offerFromExcelRow).filter((item) => item.startDate && item.endDate && item.caseName && item.developer && item.salesperson);
+        records = [...records, ...imported]; persistOffers(); renderOffers(); o.importStatus.textContent = "已成功匯入 " + imported.length + " 筆資料";
+      } catch (error) { o.importStatus.textContent = "Excel 讀取失敗，請使用下載的範本"; }
+      o.importFile.value = "";
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function offerFromExcelRow(row, index) {
+    const hasClause = String(cell(row, "是否有但書")).trim() === "是" ? "是" : "否";
+    const eighty = String(cell(row, "出價是否有開價八成", "達開價八成")).trim();
+    const unit = String(cell(row, "服務費單位")).trim();
+    return normalizeOffer({ id: makeOfferId(), startDate: excelDate(cell(row, "收斡起日", "起始日期", "收斡日期(起)")), endDate: excelDate(cell(row, "收斡迄日", "結束日期", "收斡日期(迄)")),
+      caseName: String(cell(row, "收斡案名", "案名")).trim(), developer: String(cell(row, "開發")).trim(), salesperson: String(cell(row, "銷售")).trim(),
+      offerPrice: numberValue(cell(row, "出價/承購總價", "出價／承購總價", "出價")), deposit: numberValue(cell(row, "斡旋金/金額", "斡旋金／金額", "斡旋金")),
+      serviceFee: numberValue(cell(row, "服務費")), serviceFeeUnit: unit === "%" || unit === "百分比" ? "%" : "萬元", bottomPrice: numberValue(cell(row, "本案底價", "底價")),
+      hasClause, clauseNote: hasClause === "是" ? String(cell(row, "但書內容")).trim() : "", reachesEightyPercent: eighty === "是" || eighty === "否" ? eighty : "未確認",
+      offerStatus: "active", createdAt: Date.now() + index });
+  }
+
+  function downloadOfferTemplate() {
+    if (typeof XLSX === "undefined") { alert("Excel 元件尚未載入，請重新整理後再試。"); return; }
+    const sheet = XLSX.utils.json_to_sheet([{ "收斡起日":"2026/07/18", "收斡迄日":"2026/07/21", "收斡案名":"範例案名", "開發":"王小明", "銷售":"陳小美", "出價/承購總價":1280, "斡旋金/金額":20, "服務費":4, "服務費單位":"%", "是否有但書":"是", "但書內容":"貸款需達八成", "出價是否有開價八成":"是", "本案底價":"" }]);
+    const book = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(book, sheet, "收斡旋資料"); XLSX.writeFile(book, "大湳店收斡旋匯入範本.xlsx");
+  }
+
+  function cell(row, ...keys) { for (const key of keys) if (row[key] !== undefined && row[key] !== null && String(row[key]).trim() !== "") return row[key]; return ""; }
+  function excelDate(value) { if (value instanceof Date) return isoLocal(value); if (typeof value === "number" && XLSX?.SSF) { const d = XLSX.SSF.parse_date_code(value); if (d) return d.y + "-" + String(d.m).padStart(2,"0") + "-" + String(d.d).padStart(2,"0"); } const m = String(value || "").replace(/[.]/g,"/").match(/^(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})/); return m ? m[1] + "-" + m[2].padStart(2,"0") + "-" + m[3].padStart(2,"0") : ""; }
+  function isoLocal(date) { const offset = date.getTimezoneOffset() * 60000; return new Date(date.getTime() - offset).toISOString().slice(0,10); }
+  function detail(label, value) { return '<div><dt>' + label + '</dt><dd>' + safe(value) + '</dd></div>'; }
+  function amount(value) { return new Intl.NumberFormat("zh-TW").format(numberValue(value)); }
+  function numberValue(value) { return Number(value) || 0; }
+  function makeOfferId() { return "offer-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2,8); }
+  function safe(value) { return String(value ?? "").replace(/[&<>'"]/g, (char) => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", "'":"&#39;", '"':"&quot;" }[char])); }
+})();
+
 

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>太平洋房屋 友成大湳店 業務行政系統</title>
-  <link rel="stylesheet" href="styles.css?v=20260715-5">
+  <link rel="stylesheet" href="styles.css?v=20260718-1">
 </head>
 <body>
   <main class="shell">
@@ -34,6 +34,7 @@
           <select id="mobileYearSelect" aria-label="選擇年度"></select>
         </label>
       </div>
+      <button class="tab tab-offers" type="button" data-view="offers">收斡管理</button>
     </nav>
 
     <section id="overview" class="view active">
@@ -201,6 +202,42 @@
       </div>
       <div id="peopleTable" class="table-wrap people-table"></div>
     </section>
+
+    <section id="offers" class="view offers-view">
+      <div class="offer-hero">
+        <div><p>太平洋房屋｜友成大湳店</p><h2>收斡旋管理</h2><span>建立卡片、掌握期限，重要斡旋不漏接。</span></div>
+        <div class="offer-summary"><div><span>有效案件</span><strong id="offerActiveCount">0</strong></div><div><span>3天內到期</span><strong id="offerUrgentCount">0</strong></div></div>
+      </div>
+
+      <section class="offer-panel offer-import-panel">
+        <div><h3>Excel 批次匯入</h3><p id="offerImportStatus">尚未匯入資料</p></div>
+        <div class="offer-import-actions"><button id="offerTemplateBtn" type="button">下載 Excel 範本</button><label class="offer-file-button">選擇 Excel<input id="offerImportFile" type="file" accept=".xlsx,.xls"></label></div>
+      </section>
+
+      <section class="offer-panel">
+        <div class="offer-section-head"><div><h3 id="offerFormTitle">新增收斡資料</h3><p>填妥後自動產生倒數卡片</p></div><button id="offerCancelEdit" type="button" hidden>取消編輯</button></div>
+        <form id="offerForm" class="offer-form">
+          <input id="offerEditId" type="hidden">
+          <fieldset class="offer-date-range"><legend>收斡日期（起／迄）</legend><label>起始日期<input id="offerStartDate" type="date" required></label><span>→</span><label>結束日期<input id="offerEndDate" type="date" required></label></fieldset>
+          <label class="offer-wide">收斡案名<input id="offerCaseName" required placeholder="例如：大地庭園三房車"></label>
+          <label>開發<input id="offerDeveloper" required placeholder="開發人員姓名"></label>
+          <label>銷售<input id="offerSalesperson" required placeholder="銷售人員姓名"></label>
+          <label>出價／承購總價（萬元）<input id="offerPrice" type="number" min="0" step="0.01" required></label>
+          <label>斡旋金／金額（萬元）<input id="offerDeposit" type="number" min="0" step="0.01" required></label>
+          <label>服務費<div class="offer-fee-input"><input id="offerServiceFee" type="number" min="0" step="0.01" required><select id="offerServiceFeeUnit" aria-label="服務費單位"><option>萬元</option><option>%</option></select></div></label>
+          <label>本案底價（萬元）－非必填<input id="offerBottomPrice" type="number" min="0" step="0.01" placeholder="不知道可留空"></label>
+          <label>是否有但書<select id="offerHasClause"><option>否</option><option>是</option></select></label>
+          <label>出價是否有開價八成<select id="offerEightyPercent"><option>未確認</option><option>是</option><option>否</option></select></label>
+          <label id="offerClauseField" class="offer-wide" hidden>但書內容<textarea id="offerClauseNote" placeholder="請輸入但書內容"></textarea></label>
+          <div class="offer-form-actions offer-wide"><button class="primary" type="submit" id="offerSubmitBtn">建立收斡卡片</button><button type="button" id="offerResetBtn">清除重填</button></div>
+        </form>
+      </section>
+
+      <section class="offer-panel">
+        <div class="offer-cards-toolbar"><div><h3>收斡卡片</h3><p>依期限與狀態日期自動排序</p></div><div id="offerFilters" class="offer-filters"><button class="active" data-offer-filter="all" type="button">全部</button><button data-offer-filter="active" type="button">有效</button><button data-offer-filter="expired" type="button">已逾期</button><button data-offer-filter="withdrawn" type="button">已退斡旋</button><button data-offer-filter="closed" type="button">已成交</button></div></div>
+        <div id="offerCards" class="offer-cards-grid"></div>
+      </section>
+    </section>
   </main>
 
   <dialog id="overviewDetailDialog">
@@ -248,6 +285,6 @@
   </dialog>
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="app.js?v=20260715-5"></script>
+  <script src="app.js?v=20260718-1"></script>
 </body>
 </html>
