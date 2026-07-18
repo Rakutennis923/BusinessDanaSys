@@ -1,6 +1,8 @@
 ﻿const STORAGE_KEY = "danan-business-admin-v2";
 const CLOUD_API_URL = "https://script.google.com/macros/s/AKfycby_YVfqeWsBQlHtkd1d5tILCXz3qTcIL7uAmlRI1K2Kp8xjVvxHTU7Jupw8O0nHUinz/exec";
 let cloudSyncTimer = null;
+let cloudInitialLoadComplete = false;
+let cloudSavePending = false;
 
 const defaultPartnerNames = [
   "王沛琳", "王淑貞", "冷蕙名", "余惠如", "宋美珠", "林建智", "林恒儀", "林靂玄",
@@ -103,7 +105,8 @@ function loadState() {
     company: seedCompany(year),
     people: seedPeople(),
     partners: seedLastYear(year),
-    weekly: []
+    weekly: [],
+    offers: loadLegacyOfferRecords()
   };
 }
 
@@ -128,8 +131,18 @@ function normalizeState(raw) {
     }),
     people,
     partners: partnerRows.map((record) => normalizePartnerRecord(record, people)),
-    weekly: weeklyRows.map((goal) => normalizeWeeklyGoal(goal, people))
+    weekly: weeklyRows.map((goal) => normalizeWeeklyGoal(goal, people)),
+    offers: Array.isArray(raw.offers) ? raw.offers : loadLegacyOfferRecords()
   };
+}
+
+function loadLegacyOfferRecords() {
+  try {
+    const saved = JSON.parse(localStorage.getItem("danan-offer-tracker-static-v1") || "[]");
+    return Array.isArray(saved) ? saved : [];
+  } catch (error) {
+    return [];
+  }
 }
 
 function seedPeople() {
@@ -434,25 +447,47 @@ async function loadCloudState() {
     if (!payload.ok) throw new Error(payload.error || "Cloud load failed");
 
     if (payload.state && !isCloudStateEmpty(payload.state)) {
+      const localOffers = Array.isArray(state.offers) ? state.offers : [];
+      const cloudAlreadySupportsOffers = Array.isArray(payload.state.offers);
+      const shouldMigrateLocalOffers = localOffers.length > 0
+        && (!cloudAlreadySupportsOffers || payload.state.offers.length === 0)
+        && localStorage.getItem("danan-offers-cloud-migrated-v1") !== "1";
       state = normalizeState({ ...payload.state, year: state.year });
+      if (shouldMigrateLocalOffers) state.offers = localOffers;
       state.company = ensureCompanyYear(state.year);
       ensureAnnualTarget(state.year);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       setupSelects();
       render();
+      cloudInitialLoadComplete = true;
+      window.dispatchEvent(new CustomEvent("offers-cloud-loaded"));
+      if (shouldMigrateLocalOffers) {
+        localStorage.setItem("danan-offers-cloud-migrated-v1", "1");
+        saveState();
+      } else if (cloudAlreadySupportsOffers) {
+        localStorage.setItem("danan-offers-cloud-migrated-v1", "1");
+      }
       setSyncStatus("已讀取 Google Sheet 資料");
       return;
     }
 
+    cloudInitialLoadComplete = true;
     saveState();
     setSyncStatus("Google Sheet 已建立，已同步目前資料");
   } catch (error) {
     console.warn(error);
+    cloudInitialLoadComplete = true;
+    if (cloudSavePending) scheduleCloudSave();
     setSyncStatus("雲端讀取失敗，先使用本機資料");
   }
 }
 
 function scheduleCloudSave() {
+  if (!cloudInitialLoadComplete) {
+    cloudSavePending = true;
+    return;
+  }
+  cloudSavePending = false;
   window.clearTimeout(cloudSyncTimer);
   cloudSyncTimer = window.setTimeout(saveCloudState, 700);
 }
@@ -479,13 +514,16 @@ function isCloudStateEmpty(cloudState) {
     && !(cloudState.company || []).length
     && !(cloudState.people || []).length
     && !(cloudState.partners || []).length
-    && !(cloudState.weekly || []).length;
+    && !(cloudState.weekly || []).length
+    && !(cloudState.offers || []).length;
 }
 
 function setSyncStatus(message) {
   [els.companyImportStatus, els.partnerImportStatus, els.importStatus].forEach((target) => {
     if (target) target.textContent = message;
   });
+  const offerStatus = document.querySelector("#offerImportStatus");
+  if (offerStatus) offerStatus.textContent = message;
 }
 
 function ensureCompanyYear(year) {
@@ -1905,13 +1943,19 @@ function downloadExcel(filename, html) {
   o.cards.addEventListener("click", handleOfferCardAction);
   o.importFile.addEventListener("change", importOfferExcel);
   o.templateBtn.addEventListener("click", downloadOfferTemplate);
+  window.addEventListener("offers-cloud-loaded", refreshOffersFromCloud);
   renderOffers();
 
   function loadOffers() {
     try {
-      const saved = JSON.parse(localStorage.getItem(KEY) || "[]");
+      const saved = Array.isArray(state.offers) ? state.offers : JSON.parse(localStorage.getItem(KEY) || "[]");
       return Array.isArray(saved) ? saved.map(normalizeOffer) : [];
     } catch (error) { return []; }
+  }
+
+  function refreshOffersFromCloud() {
+    records = (Array.isArray(state.offers) ? state.offers : []).map(normalizeOffer);
+    renderOffers();
   }
 
   function normalizeOffer(item) {
@@ -1923,7 +1967,9 @@ function downloadExcel(filename, html) {
   }
 
   function persistOffers() {
+    state.offers = records;
     localStorage.setItem(KEY, JSON.stringify(records));
+    saveState();
   }
 
   function todayStart() {
