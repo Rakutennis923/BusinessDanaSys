@@ -1997,6 +1997,7 @@ function downloadExcel(filename, html) {
     bottomPrice: document.querySelector("#offerBottomPrice"), hasClause: document.querySelector("#offerHasClause"), clauseField: document.querySelector("#offerClauseField"),
     clauseNote: document.querySelector("#offerClauseNote"), eighty: document.querySelector("#offerEightyPercent"), submitBtn: document.querySelector("#offerSubmitBtn"),
     cancelEdit: document.querySelector("#offerCancelEdit"), resetBtn: document.querySelector("#offerResetBtn"), cards: document.querySelector("#offerCards"),
+    openFormBtn: document.querySelector("#openOfferFormBtn"), closeFormBtn: document.querySelector("#closeOfferFormBtn"), formBackdrop: document.querySelector("#offerFormBackdrop"),
     filters: document.querySelector("#offerFilters"), allCount: document.querySelector("#offerAllCount"), activeCount: document.querySelector("#offerActiveCount"), urgentCount: document.querySelector("#offerUrgentCount"),
     expiredCount: document.querySelector("#offerExpiredCount"), withdrawnCount: document.querySelector("#offerWithdrawnCount"), closedCount: document.querySelector("#offerClosedCount"),
     importFile: document.querySelector("#offerImportFile"), importStatus: document.querySelector("#offerImportStatus"), templateBtn: document.querySelector("#offerTemplateBtn")
@@ -2005,7 +2006,13 @@ function downloadExcel(filename, html) {
   o.form.addEventListener("submit", saveOffer);
   o.hasClause.addEventListener("change", toggleClause);
   o.resetBtn.addEventListener("click", resetOfferForm);
-  o.cancelEdit.addEventListener("click", resetOfferForm);
+  o.cancelEdit.addEventListener("click", () => { resetOfferForm(); closeOfferFormDrawer(); });
+  o.openFormBtn.addEventListener("click", () => { resetOfferForm(); openOfferFormDrawer(); });
+  o.closeFormBtn.addEventListener("click", closeOfferFormDrawer);
+  o.formBackdrop.addEventListener("click", closeOfferFormDrawer);
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && o.form.classList.contains("drawer-open")) closeOfferFormDrawer();
+  });
   o.filters.addEventListener("click", changeOfferFilter);
   o.cards.addEventListener("click", handleOfferCardAction);
   o.importFile.addEventListener("change", importOfferExcel);
@@ -2117,7 +2124,7 @@ function downloadExcel(filename, html) {
       withdrawnAt: reactivateWithdrawn ? undefined : old?.withdrawnAt, closedAt: old?.closedAt
     });
     records = old ? records.map((item) => item.id === old.id ? record : item) : [...records, record];
-    persistOffers(); resetOfferForm();
+    persistOffers(); resetOfferForm(); closeOfferFormDrawer();
     if (reactivateWithdrawn) applyOfferFilter("active"); else renderOffers();
     document.querySelector("#offerCards")?.scrollIntoView({ behavior: "smooth" });
   }
@@ -2125,6 +2132,26 @@ function downloadExcel(filename, html) {
   function resetOfferForm() {
     o.form.reset(); o.editId.value = ""; o.formTitle.textContent = "新增收斡資料"; o.submitBtn.textContent = "建立收斡卡片";
     o.cancelEdit.hidden = true; o.serviceFeeUnit.value = "萬元"; o.eighty.value = "未確認"; toggleClause();
+  }
+
+  function isOfferDrawerView() {
+    return window.matchMedia("(max-width: 640px)").matches;
+  }
+
+  function openOfferFormDrawer() {
+    if (!isOfferDrawerView()) return;
+    o.form.classList.add("drawer-open");
+    o.formBackdrop.classList.add("visible");
+    o.openFormBtn.setAttribute("aria-expanded", "true");
+    document.body.classList.add("drawer-active");
+    window.setTimeout(() => o.startDate?.focus(), 180);
+  }
+
+  function closeOfferFormDrawer() {
+    o.form.classList.remove("drawer-open");
+    o.formBackdrop.classList.remove("visible");
+    o.openFormBtn.setAttribute("aria-expanded", "false");
+    document.body.classList.remove("drawer-active");
   }
 
   function toggleClause() {
@@ -2225,7 +2252,7 @@ function downloadExcel(filename, html) {
     o.serviceFee.value = record.serviceFee; o.serviceFeeUnit.value = record.serviceFeeUnit || "萬元"; o.bottomPrice.value = record.bottomPrice || "";
     o.hasClause.value = record.hasClause || "否"; o.clauseNote.value = record.clauseNote || ""; o.eighty.value = record.reachesEightyPercent || "未確認";
     o.formTitle.textContent = "編輯收斡資料"; o.submitBtn.textContent = "儲存修改"; o.cancelEdit.hidden = false; toggleClause();
-    root.scrollIntoView({ behavior: "smooth" });
+    if (isOfferDrawerView()) openOfferFormDrawer(); else root.scrollIntoView({ behavior: "smooth" });
   }
 
   function importOfferExcel(event) {

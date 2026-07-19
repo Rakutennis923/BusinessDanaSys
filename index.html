@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>太平洋房屋 友成大湳店 業務行政系統</title>
-  <link rel="stylesheet" href="styles.css?v=20260719-5">
+  <link rel="stylesheet" href="styles.css?v=20260719-6">
 </head>
 <body>
   <main class="shell">
@@ -221,9 +221,12 @@
         <div class="offer-import-actions"><button id="offerTemplateBtn" type="button">下載 Excel 範本</button><label class="offer-file-button">選擇 Excel<input id="offerImportFile" type="file" accept=".xlsx,.xls"></label></div>
       </section>
 
-      <section class="offer-panel">
+      <section class="offer-panel offer-form-panel">
         <div class="offer-section-head"><div><h3 id="offerFormTitle">新增收斡資料</h3><p>填妥後自動產生倒數卡片</p></div><button id="offerCancelEdit" type="button" hidden>取消編輯</button></div>
+        <button id="openOfferFormBtn" class="primary offer-form-trigger" type="button" aria-controls="offerForm" aria-expanded="false">＋ 新增斡旋</button>
+        <div id="offerFormBackdrop" class="offer-form-backdrop" aria-hidden="true"></div>
         <form id="offerForm" class="offer-form">
+          <div class="offer-form-drawer-head offer-wide"><div><strong>新增／修改斡旋</strong><span>填妥後建立倒數卡片</span></div><button id="closeOfferFormBtn" class="drawer-close" type="button" aria-label="關閉新增斡旋視窗">×</button></div>
           <input id="offerEditId" type="hidden">
           <fieldset class="offer-date-range"><legend>收斡日期（起／迄）</legend><label>起始日期<input id="offerStartDate" type="date" required></label><span>→</span><label>結束日期<input id="offerEndDate" type="date" required></label></fieldset>
           <label class="offer-wide">收斡案名<input id="offerCaseName" required placeholder="例如：大地庭園三房車"></label>
@@ -292,6 +295,6 @@
   </dialog>
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="app.js?v=20260719-5"></script>
+  <script src="app.js?v=20260719-6"></script>
 </body>
 </html>

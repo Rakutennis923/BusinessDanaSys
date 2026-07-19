@@ -174,6 +174,7 @@ button {
 .offer-panel h3 { margin:0; font-size:20px; }
 .offer-panel p { margin:3px 0 0; color:var(--muted); font-size:13px; font-weight:800; }
 .offer-import-actions,.offer-form-actions { display:flex; gap:8px; }
+.offer-form-trigger,.offer-form-backdrop,.offer-form-drawer-head { display:none; }
 .offer-file-button { display:flex; place-items:center; min-height:40px; padding:0 14px; border-radius:8px; background:var(--green); color:#fff; cursor:pointer; }
 .offer-file-button input { position:absolute; width:1px; height:1px; opacity:0; }
 .offer-form { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-top:16px; }
@@ -246,6 +247,15 @@ button {
   .offer-filters button { flex:1 1 30%; }
   .offer-details { grid-template-columns:1fr; }
   .offer-form-actions { display:grid; }
+  .offer-form-panel>.offer-section-head { display:none; }
+  .offer-form-trigger { display:block; width:100%; }
+  .offer-form-backdrop { display:block; position:fixed; inset:0; z-index:110; background:rgba(18,35,31,.5); opacity:0; visibility:hidden; transition:opacity .22s ease,visibility .22s ease; }
+  .offer-form-backdrop.visible { opacity:1; visibility:visible; }
+  #offers .offer-form { display:grid; position:fixed; top:0; right:0; bottom:0; z-index:120; width:min(92vw,420px); margin:0; padding:18px 16px calc(24px + env(safe-area-inset-bottom)); border:0; border-radius:18px 0 0 18px; background:#fff; overflow-y:auto; overscroll-behavior:contain; align-content:start; transform:translateX(105%); visibility:hidden; transition:transform .25s ease,visibility .25s ease; box-shadow:-10px 0 30px rgba(20,52,44,.22); }
+  #offers .offer-form.drawer-open { transform:translateX(0); visibility:visible; }
+  .offer-form-drawer-head { display:flex; justify-content:space-between; align-items:center; gap:12px; padding-bottom:12px; border-bottom:1px solid var(--line); }
+  .offer-form-drawer-head strong { display:block; color:var(--ink); font-size:20px; }
+  .offer-form-drawer-head span { display:block; margin-top:3px; color:var(--muted); font-size:13px; font-weight:800; }
 }
 
 .section-head {
