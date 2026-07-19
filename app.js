@@ -17,7 +17,7 @@ const defaultPartnerNames = [
 
 const goalTypes = ["進案", "委託", "帶看", "議價", "廣告", "拜訪", "發DM", "掃街", "收斡", "成交"];
 const monthLabels = Array.from({ length: 12 }, (_, i) => `${i + 1}月`);
-const EXCLUDED_PARTNER_NAMES = new Set(["單月店冠軍"]);
+const EXCLUDED_PARTNER_NAMES = new Set(["單月店冠軍", "其他", "總計"]);
 
 let state = loadState();
 
