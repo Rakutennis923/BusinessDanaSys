@@ -1,5 +1,6 @@
 ﻿const STORAGE_KEY = "danan-business-admin-v2";
 const CLOUD_API_URL = "https://script.google.com/macros/s/AKfycby_YVfqeWsBQlHtkd1d5tILCXz3qTcIL7uAmlRI1K2Kp8xjVvxHTU7Jupw8O0nHUinz/exec";
+const PARTNER_MONTH_STORAGE_KEY = "danan-partner-last-month-v1";
 let cloudSyncTimer = null;
 let cloudInitialLoadComplete = false;
 let cloudSavePending = false;
@@ -310,11 +311,17 @@ function seedLastYear(year) {
 
 function setupSelects() {
   const currentYear = new Date().getFullYear();
+  const currentPartnerMonth = Number(els.partnerMonth.value);
+  const savedPartnerMonth = Number(localStorage.getItem(PARTNER_MONTH_STORAGE_KEY));
+  const preferredPartnerMonth = savedPartnerMonth >= 1 && savedPartnerMonth <= 12
+    ? savedPartnerMonth
+    : currentPartnerMonth >= 1 && currentPartnerMonth <= 12 ? currentPartnerMonth : 1;
   const yearOptions = Array.from({ length: currentYear - 2020 + 2 }, (_, index) => 2020 + index)
     .map((year) => `<option ${year === state.year ? "selected" : ""}>${year}</option>`).join("");
   els.yearSelect.innerHTML = yearOptions;
   if (els.mobileYearSelect) els.mobileYearSelect.innerHTML = yearOptions;
   els.partnerMonth.innerHTML = monthLabels.map((label, i) => `<option value="${i + 1}">${label}</option>`).join("");
+  els.partnerMonth.value = String(preferredPartnerMonth);
   if (els.companyMonthSelect) {
     els.companyMonthSelect.innerHTML = monthLabels.map((label, i) => `<option value="${i + 1}">${label}</option>`).join("");
     els.companyMonthSelect.value = String(new Date().getMonth() + 1);
@@ -375,6 +382,7 @@ function bindEvents() {
   });
 
   els.partnerMonth.addEventListener("change", () => {
+    localStorage.setItem(PARTNER_MONTH_STORAGE_KEY, els.partnerMonth.value);
     fillPartnerForm();
     renderPartners();
   });
