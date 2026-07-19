@@ -161,13 +161,13 @@ button {
 .offer-hero { display:flex; justify-content:space-between; align-items:end; gap:20px; padding:24px; border-radius:18px; background:linear-gradient(135deg,#0d4e3d,#16735b); color:#fff; box-shadow:0 14px 34px rgba(13,78,61,.16); }
 .offer-hero p,.offer-hero span { margin:0; color:#d8f0e8; font-weight:800; }
 .offer-hero h2 { margin:5px 0 8px; color:#fff; font-size:34px; }
-.offer-summary { display:grid; grid-template-columns:repeat(2,110px); gap:8px; }
-.offer-summary button { width:100%; padding:12px; border:1px solid rgba(255,255,255,.28); border-radius:12px; background:rgba(255,255,255,.1); color:#fff; text-align:left; cursor:pointer; transition:transform .16s ease,background .16s ease,box-shadow .16s ease; }
+.offer-summary { display:grid; flex:1; grid-template-columns:repeat(6,minmax(86px,1fr)); gap:8px; }
+.offer-summary button { width:100%; min-width:0; padding:12px; border:1px solid rgba(255,255,255,.28); border-radius:12px; background:rgba(255,255,255,.1); color:#fff; text-align:center; cursor:pointer; transition:transform .16s ease,background .16s ease,box-shadow .16s ease; }
 .offer-summary button:hover { transform:translateY(-2px); background:rgba(255,255,255,.18); }
 .offer-summary button:focus-visible { outline:3px solid #ffd95a; outline-offset:2px; }
 .offer-summary button.active { background:#fff; color:#12624e; box-shadow:0 8px 18px rgba(0,0,0,.16); }
 .offer-summary button.active span { color:#12624e; }
-.offer-summary span { display:block; font-size:11px; }
+.offer-summary span { display:block; min-height:28px; font-size:11px; }
 .offer-summary strong { display:block; margin-top:3px; font-size:28px; }
 .offer-panel { margin-top:14px; padding:18px; border:1px solid var(--line); border-radius:14px; background:#fff; }
 .offer-import-panel,.offer-section-head,.offer-cards-toolbar { display:flex; justify-content:space-between; align-items:center; gap:16px; }
@@ -229,6 +229,8 @@ button {
 .offer-archive-controls button:disabled { opacity:.4; }
 
 @media (max-width: 800px) {
+  .offer-hero { display:block; }
+  .offer-summary { margin-top:14px; grid-template-columns:repeat(3,1fr); }
   .offer-form { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .offer-cards-grid { grid-template-columns:1fr; }
 }

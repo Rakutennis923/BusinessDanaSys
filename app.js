@@ -1937,7 +1937,8 @@ function downloadExcel(filename, html) {
     bottomPrice: document.querySelector("#offerBottomPrice"), hasClause: document.querySelector("#offerHasClause"), clauseField: document.querySelector("#offerClauseField"),
     clauseNote: document.querySelector("#offerClauseNote"), eighty: document.querySelector("#offerEightyPercent"), submitBtn: document.querySelector("#offerSubmitBtn"),
     cancelEdit: document.querySelector("#offerCancelEdit"), resetBtn: document.querySelector("#offerResetBtn"), cards: document.querySelector("#offerCards"),
-    filters: document.querySelector("#offerFilters"), summary: document.querySelector("#offerSummary"), activeCount: document.querySelector("#offerActiveCount"), urgentCount: document.querySelector("#offerUrgentCount"),
+    filters: document.querySelector("#offerFilters"), allCount: document.querySelector("#offerAllCount"), activeCount: document.querySelector("#offerActiveCount"), urgentCount: document.querySelector("#offerUrgentCount"),
+    expiredCount: document.querySelector("#offerExpiredCount"), withdrawnCount: document.querySelector("#offerWithdrawnCount"), closedCount: document.querySelector("#offerClosedCount"),
     importFile: document.querySelector("#offerImportFile"), importStatus: document.querySelector("#offerImportStatus"), templateBtn: document.querySelector("#offerTemplateBtn")
   };
 
@@ -1946,7 +1947,6 @@ function downloadExcel(filename, html) {
   o.resetBtn.addEventListener("click", resetOfferForm);
   o.cancelEdit.addEventListener("click", resetOfferForm);
   o.filters.addEventListener("click", changeOfferFilter);
-  o.summary.addEventListener("click", changeOfferSummaryFilter);
   o.cards.addEventListener("click", handleOfferCardAction);
   o.importFile.addEventListener("change", importOfferExcel);
   o.templateBtn.addEventListener("click", downloadOfferTemplate);
@@ -2047,16 +2047,18 @@ function downloadExcel(filename, html) {
     event.preventDefault();
     if (o.endDate.value < o.startDate.value) { alert("收斡迄日不可早於起日。"); return; }
     const old = records.find((item) => item.id === o.editId.value);
+    const reactivateWithdrawn = Boolean(old && isRefunded(old) && o.endDate.value > old.endDate && daysRemaining(o.endDate.value) >= 0);
     const record = normalizeOffer({
       id: old?.id || makeOfferId(), startDate: o.startDate.value, endDate: o.endDate.value, caseName: o.caseName.value.trim(),
       developer: o.developer.value.trim(), salesperson: o.salesperson.value.trim(), offerPrice: numberValue(o.price.value),
       deposit: numberValue(o.deposit.value), serviceFee: numberValue(o.serviceFee.value), serviceFeeUnit: o.serviceFeeUnit.value,
       bottomPrice: numberValue(o.bottomPrice.value), hasClause: o.hasClause.value, clauseNote: o.hasClause.value === "是" ? o.clauseNote.value.trim() : "",
-      reachesEightyPercent: o.eighty.value, createdAt: old?.createdAt || Date.now(), offerStatus: old?.offerStatus || "active",
-      withdrawnAt: old?.withdrawnAt, closedAt: old?.closedAt
+      reachesEightyPercent: o.eighty.value, createdAt: old?.createdAt || Date.now(), offerStatus: reactivateWithdrawn ? "active" : old?.offerStatus || "active",
+      withdrawnAt: reactivateWithdrawn ? undefined : old?.withdrawnAt, closedAt: old?.closedAt
     });
     records = old ? records.map((item) => item.id === old.id ? record : item) : [...records, record];
-    persistOffers(); resetOfferForm(); renderOffers();
+    persistOffers(); resetOfferForm();
+    if (reactivateWithdrawn) applyOfferFilter("active"); else renderOffers();
     document.querySelector("#offerCards")?.scrollIntoView({ behavior: "smooth" });
   }
 
@@ -2073,19 +2075,13 @@ function downloadExcel(filename, html) {
   function changeOfferFilter(event) {
     const button = event.target.closest("[data-offer-filter]"); if (!button) return;
     applyOfferFilter(button.dataset.offerFilter);
-  }
-
-  function changeOfferSummaryFilter(event) {
-    const button = event.target.closest("[data-offer-summary]"); if (!button) return;
-    applyOfferFilter(button.dataset.offerSummary);
     document.querySelector("#offerCards")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   function applyOfferFilter(filter) {
     currentFilter = filter; archivePage = 0;
-    o.filters.querySelectorAll("button").forEach((button) => button.classList.toggle("active", button.dataset.offerFilter === filter));
-    o.summary.querySelectorAll("button").forEach((button) => {
-      const selected = button.dataset.offerSummary === filter;
+    o.filters.querySelectorAll("button").forEach((button) => {
+      const selected = button.dataset.offerFilter === filter;
       button.classList.toggle("active", selected);
       button.setAttribute("aria-pressed", String(selected));
     });
@@ -2113,8 +2109,12 @@ function downloadExcel(filename, html) {
     const recent = visible.filter((record) => !isOlderThanSixMonths(record));
     const archived = visible.filter(isOlderThanSixMonths);
     archivePage = Math.min(archivePage, Math.max(archived.length - 1, 0));
+    o.allCount.textContent = records.length;
     o.activeCount.textContent = records.filter(isActiveOffer).length;
     o.urgentCount.textContent = records.filter((record) => isActiveOffer(record) && daysRemaining(record.endDate) <= 3).length;
+    o.expiredCount.textContent = records.filter(isExpiredOffer).length;
+    o.withdrawnCount.textContent = records.filter(isRefunded).length;
+    o.closedCount.textContent = records.filter(isDeal).length;
     if (!visible.length) { o.cards.innerHTML = '<div class="offer-empty">目前沒有此分類的收斡卡片</div>'; return; }
     const recentHtml = recent.map(offerCardHtml).join("");
     const archiveHtml = archived.length ? archiveHtmlBlock(archived) : "";
