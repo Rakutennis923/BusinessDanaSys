@@ -4,6 +4,10 @@ const PARTNER_MONTH_STORAGE_KEY = "danan-partner-last-month-v1";
 let cloudSyncTimer = null;
 let cloudInitialLoadComplete = false;
 let cloudSavePending = false;
+let cloudLoadInProgress = false;
+let cloudSaveInProgress = false;
+let cloudWriteHoldUntil = 0;
+let partnerFormDirty = false;
 
 const defaultPartnerNames = [
   "王沛琳", "王淑貞", "冷蕙名", "余惠如", "宋美珠", "林建智", "林恒儀", "林靂玄",
@@ -194,8 +198,15 @@ function normalizePartnerRecord(record, people) {
   const person = personByName(record.partnerName, people) || personById(record.personId, people);
   return {
     ...record,
+    year: Number(record.year) || new Date().getFullYear(),
+    month: Number(record.month) || 1,
     personId: record.personId || person?.id || "",
-    partnerName: record.partnerName || person?.name || ""
+    partnerName: record.partnerName || person?.name || "",
+    annualRevenueTarget: Number(record.annualRevenueTarget) || 0,
+    actualRevenue: Number(record.actualRevenue) || 0,
+    actualListings: Number(record.actualListings) || 0,
+    actualOffers: Number(record.actualOffers) || 0,
+    actualClosings: Number(record.actualClosings) || 0
   };
 }
 
@@ -382,6 +393,7 @@ function bindEvents() {
   });
 
   els.partnerMonth.addEventListener("change", () => {
+    partnerFormDirty = false;
     localStorage.setItem(PARTNER_MONTH_STORAGE_KEY, els.partnerMonth.value);
     fillPartnerForm();
     renderPartners();
@@ -397,8 +409,15 @@ function bindEvents() {
   }
   if (els.companyImportBtn) els.companyImportBtn.addEventListener("click", importCompanyExcel);
   els.partnerName.addEventListener("change", () => {
+    partnerFormDirty = false;
     fillPartnerForm();
     renderPartners();
+  });
+  [els.annualRevenueTarget, els.actualRevenue, els.actualListings, els.actualOffers, els.actualClosings].forEach((input) => {
+    input?.addEventListener("input", () => {
+      partnerFormDirty = true;
+      if (els.partnerImportStatus) els.partnerImportStatus.textContent = "資料輸入中，雲端讀取已暫停；請按儲存";
+    });
   });
   if (els.openPartnerFormBtn) els.openPartnerFormBtn.addEventListener("click", openPartnerFormDrawer);
   if (els.closePartnerFormBtn) els.closePartnerFormBtn.addEventListener("click", closePartnerFormDrawer);
@@ -452,6 +471,8 @@ function saveState() {
 }
 
 async function loadCloudState() {
+  if (cloudLoadInProgress || cloudSaveInProgress || Date.now() < cloudWriteHoldUntil || partnerFormDirty || els.partnerForm?.contains(document.activeElement)) return;
+  cloudLoadInProgress = true;
   setSyncStatus("正在讀取 Google Sheet 資料...");
 
   try {
@@ -459,6 +480,10 @@ async function loadCloudState() {
     const payload = await response.json();
 
     if (!payload.ok) throw new Error(payload.error || "Cloud load failed");
+    if (partnerFormDirty || els.partnerForm?.contains(document.activeElement)) {
+      if (els.partnerImportStatus) els.partnerImportStatus.textContent = "尚未儲存的輸入已保留，暫不套用雲端資料";
+      return;
+    }
 
     if (payload.state && !isCloudStateEmpty(payload.state)) {
       const localOffers = Array.isArray(state.offers) ? state.offers : [];
@@ -493,6 +518,8 @@ async function loadCloudState() {
     cloudInitialLoadComplete = true;
     if (cloudSavePending) scheduleCloudSave();
     setSyncStatus("雲端讀取失敗，先使用本機資料");
+  } finally {
+    cloudLoadInProgress = false;
   }
 }
 
@@ -507,6 +534,11 @@ function scheduleCloudSave() {
 }
 
 async function saveCloudState() {
+  if (cloudSaveInProgress) {
+    cloudSavePending = true;
+    return;
+  }
+  cloudSaveInProgress = true;
   setSyncStatus("正在同步 Google Sheet...");
 
   try {
@@ -516,10 +548,14 @@ async function saveCloudState() {
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({ action: "saveAll", state })
     });
+    cloudWriteHoldUntil = Date.now() + 5000;
     setSyncStatus("已同步 Google Sheet");
   } catch (error) {
     console.warn(error);
     setSyncStatus("雲端同步失敗，資料已先存在本機");
+  } finally {
+    cloudSaveInProgress = false;
+    if (cloudSavePending) scheduleCloudSave();
   }
 }
 
@@ -959,6 +995,8 @@ function savePartnerRecord(event) {
   });
   applyAnnualTargetFromMonth(partnerName, month, annualTarget);
 
+  partnerFormDirty = false;
+  cloudWriteHoldUntil = Date.now() + 8000;
   saveState();
   render();
   closePartnerFormDrawer();
