@@ -17,6 +17,7 @@ const defaultPartnerNames = [
 
 const goalTypes = ["進案", "委託", "帶看", "議價", "廣告", "拜訪", "發DM", "掃街", "收斡", "成交"];
 const monthLabels = Array.from({ length: 12 }, (_, i) => `${i + 1}月`);
+const EXCLUDED_PARTNER_NAMES = new Set(["單月店冠軍"]);
 
 let state = loadState();
 
@@ -122,8 +123,8 @@ function loadState() {
 }
 
 function normalizeState(raw) {
-  const partnerRows = raw.partners || [];
-  const weeklyRows = raw.weekly || [];
+  const partnerRows = (raw.partners || []).filter((record) => !isExcludedPartnerName(record.partnerName));
+  const weeklyRows = (raw.weekly || []).filter((record) => !isExcludedPartnerName(record.partnerName));
   const people = normalizePeople(raw.people, partnerRows, weeklyRows);
   return {
     year: raw.year || new Date().getFullYear(),
@@ -168,7 +169,7 @@ function normalizePeople(rawPeople, partnerRows = [], weeklyRows = []) {
   ].filter(Boolean);
   const byName = new Map();
 
-  (rawPeople || []).forEach((person, index) => {
+  (rawPeople || []).filter((person) => !isExcludedPartnerName(person.name)).forEach((person, index) => {
     const normalized = {
       id: person.id || personIdFromName(person.name || `夥伴${index + 1}`),
       name: person.name || "",
@@ -192,6 +193,16 @@ function normalizePeople(rawPeople, partnerRows = [], weeklyRows = []) {
   });
 
   return [...byName.values()].sort((a, b) => a.sort - b.sort || a.name.localeCompare(b.name, "zh-Hant"));
+}
+
+function isExcludedPartnerName(name) {
+  return EXCLUDED_PARTNER_NAMES.has(String(name || "").trim());
+}
+
+function hasExcludedPartnerData(raw) {
+  return (raw.people || []).some((person) => isExcludedPartnerName(person.name))
+    || (raw.partners || []).some((record) => isExcludedPartnerName(record.partnerName))
+    || (raw.weekly || []).some((record) => isExcludedPartnerName(record.partnerName));
 }
 
 function normalizePartnerRecord(record, people) {
@@ -486,6 +497,7 @@ async function loadCloudState() {
     }
 
     if (payload.state && !isCloudStateEmpty(payload.state)) {
+      const needsPartnerCleanup = hasExcludedPartnerData(payload.state);
       const localOffers = Array.isArray(state.offers) ? state.offers : [];
       const cloudAlreadySupportsOffers = Array.isArray(payload.state.offers);
       const shouldMigrateLocalOffers = localOffers.length > 0
@@ -506,6 +518,7 @@ async function loadCloudState() {
       } else if (cloudAlreadySupportsOffers) {
         localStorage.setItem("danan-offers-cloud-migrated-v1", "1");
       }
+      if (needsPartnerCleanup) saveState();
       setSyncStatus("已讀取 Google Sheet 資料");
       return;
     }
@@ -1029,7 +1042,7 @@ function parsePartnerExcel(text) {
   const headers = rows[headerIndex].map(normalizeHeader);
   return rows.slice(headerIndex + 1)
     .map((row) => partnerRecordFromRow(headers, row))
-    .filter((record) => record.partnerName);
+    .filter((record) => record.partnerName && !isExcludedPartnerName(record.partnerName));
 }
 
 function parseTabularText(text) {
@@ -1177,6 +1190,7 @@ function partnerRecordFromRow(headers, row) {
 
 function upsertPartnerRecords(records) {
   records.forEach((record) => {
+    if (isExcludedPartnerName(record.partnerName)) return;
     const person = ensureHistoricalPerson(record.partnerName);
     record.personId = record.personId || person?.id || "";
     const existing = state.partners.find((item) => item.year === record.year && item.month === record.month && item.partnerName === record.partnerName);
@@ -1200,7 +1214,7 @@ function upsertPartnerRecords(records) {
 }
 
 function ensureHistoricalPerson(name) {
-  if (!name) return null;
+  if (!name || isExcludedPartnerName(name)) return null;
   let person = personByName(name);
   if (person) return person;
 
