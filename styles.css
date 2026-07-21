@@ -941,6 +941,7 @@ dialog::backdrop {
   .tabs .mobile-year-picker {
     display: block;
     width: 100%;
+    grid-column: 1 / -1;
     margin: 0;
   }
 
@@ -975,7 +976,7 @@ dialog::backdrop {
   }
 
   .tab-offers {
-    grid-column: 1 / -1;
+    grid-column: auto;
   }
 
   .offers-frame {

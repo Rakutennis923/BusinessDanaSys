@@ -648,8 +648,7 @@ function hasPartnerActivity(record) {
 }
 
 function monthlyAgentCount(month) {
-  const names = new Set(monthlyPartnerRows(month).filter(hasPartnerActivity).map((record) => record.partnerName).filter(Boolean));
-  return names.size || activePeople().length;
+  return activePeople().length;
 }
 
 function renderOverview() {
