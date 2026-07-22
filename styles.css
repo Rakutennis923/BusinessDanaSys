@@ -376,6 +376,10 @@ svg {
 .bar-value { text-anchor: middle; font-size: 11px; font-weight: 800; }
 .bar-target-value { fill: var(--blue); }
 .bar-actual-value { fill: #fff; paint-order: stroke; stroke: rgba(0,0,0,.28); stroke-width: 2px; }
+.bar-gap-value { text-anchor: middle; font-size: 13px; font-weight: 900; }
+.bar-gap-value.positive { fill: #16855b; }
+.bar-gap-value.negative { fill: #d13d45; }
+.bar-gap-value.equal { fill: #526070; }
 .bar-gap-positive { fill: rgba(31, 122, 95, .75); }
 .bar-gap-negative { fill: rgba(180, 35, 24, .75); }
 .dot { fill: var(--green); }

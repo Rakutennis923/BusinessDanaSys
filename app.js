@@ -1649,22 +1649,33 @@ function drawProfitChart(svg, rows) {
 
 function drawGapChart(svg, rows) {
   const width = 980;
-  const height = 260;
-  const pad = 42;
+  const height = 280;
+  const pad = 58;
   const max = Math.max(1, ...rows.map((row) => Math.max(num(row.targetRevenue), monthlyPartnerRevenue(row.month))));
   const baseY = height - pad;
+  const gapLabelY = 18;
   const barWidth = (width - pad * 2) / 12 * 0.58;
   const y = (value) => baseY - (value / max) * (height - pad * 2);
   svg.innerHTML = chartBase(width, height, pad, max) + `
     ${rows.map((row, index) => {
       const target = Math.max(0, num(row.targetRevenue));
       const actual = Math.max(0, monthlyPartnerRevenue(row.month));
+      const gap = actual - target;
       const x = pad + index * ((width - pad * 2) / 12) + 10;
       const fillHeight = baseY - y(actual);
+      let targetLabelY = Math.max(47, y(target) - 7);
+      let actualLabelY = Math.max(32, y(actual) - 7);
+      if (actual > target && targetLabelY - actualLabelY < 15) {
+        actualLabelY = Math.max(32, targetLabelY - 15);
+      } else if (actual < target && actualLabelY - targetLabelY < 15) {
+        actualLabelY = targetLabelY + 15;
+      }
+      const gapText = gap > 0 ? `+${money(gap)}` : gap < 0 ? `-${money(Math.abs(gap))}` : "0";
       return `<rect class="bar-target-outline" x="${x}" y="${y(target)}" width="${barWidth}" height="${baseY - y(target)}"></rect>
         ${actual > 0 ? `<rect class="bar-actual-fill" x="${x}" y="${y(actual)}" width="${barWidth}" height="${fillHeight}"></rect>` : ""}
-        <text class="bar-value bar-target-value" x="${x + barWidth / 2}" y="${Math.max(13, y(target) - 7)}">目標 ${money(target)}</text>
-        ${actual > 0 ? `<text class="bar-value bar-actual-value" x="${x + barWidth / 2}" y="${Math.max(25, y(actual) + 15)}">業績 ${money(actual)}</text>` : ""}`;
+        <text class="bar-gap-value ${gap > 0 ? "positive" : gap < 0 ? "negative" : "equal"}" x="${x + barWidth / 2}" y="${gapLabelY}">${gapText}</text>
+        <text class="bar-value bar-target-value" x="${x + barWidth / 2}" y="${targetLabelY}">目標 ${money(target)}</text>
+        ${actual > 0 ? `<text class="bar-value bar-actual-value" x="${x + barWidth / 2}" y="${actualLabelY}">業績 ${money(actual)}</text>` : ""}`;
     }).join("")}
   `;
 }
