@@ -1602,15 +1602,20 @@ function drawLineChart(svg, rows, realKey, targetKey) {
   const max = Math.max(1, ...values);
   const x = (index) => pad + (index * (width - pad * 2)) / 11;
   const y = (value) => height - pad - (value / max) * (height - pad * 2);
-  const line = (key) => rows.map((row, index) => {
+  const latestActualMonth = Math.max(0, ...rows
+    .filter((row) => monthlyPartnerRows(row.month).some(hasPartnerActivity))
+    .map((row) => row.month));
+  const actualRows = rows.filter((row) => row.month <= latestActualMonth);
+  const line = (key, sourceRows = rows) => sourceRows.map((row, index) => {
     const value = key === "actualRevenue" ? monthlyPartnerRevenue(row.month) : row[key];
-    return `${index ? "L" : "M"} ${x(index)} ${y(value)}`;
+    const rowIndex = rows.indexOf(row);
+    return `${index ? "L" : "M"} ${x(rowIndex)} ${y(value)}`;
   }).join(" ");
 
   svg.innerHTML = chartBase(width, height, pad, max) + `
     <path class="line-target" d="${line(targetKey)}"></path>
-    <path class="line-real" d="${line(realKey)}"></path>
-    ${rows.map((row, index) => `<circle class="dot" cx="${x(index)}" cy="${y(monthlyPartnerRevenue(row.month))}" r="4"></circle>`).join("")}
+    ${actualRows.length ? `<path class="line-real" d="${line(realKey, actualRows)}"></path>` : ""}
+    ${actualRows.map((row) => `<circle class="dot" cx="${x(rows.indexOf(row))}" cy="${y(monthlyPartnerRevenue(row.month))}" r="4"></circle>`).join("")}
     <text class="label" x="${width - 170}" y="24">實際業績</text>
     <text class="label" x="${width - 88}" y="24">預測目標</text>
   `;
@@ -1620,37 +1625,58 @@ function drawProfitChart(svg, rows) {
   const width = 720;
   const height = 280;
   const pad = 42;
-  const max = Math.max(1, ...rows.map(calcProfit), ...rows.map((row) => {
+  const profits = rows.map(calcProfit);
+  const efficiencies = rows.map((row) => {
     const agentCount = monthlyAgentCount(row.month);
     return agentCount ? monthlyPartnerRevenue(row.month) / agentCount : 0;
-  }));
+  });
+  const min = Math.min(0, ...profits);
+  const max = Math.max(1, ...profits, ...efficiencies);
+  const range = max - min || 1;
   const barWidth = (width - pad * 2) / 12 * 0.58;
-  const y = (value) => height - pad - (value / max) * (height - pad * 2);
-  svg.innerHTML = chartBase(width, height, pad, max) + rows.map((row, index) => {
+  const y = (value) => pad + ((max - value) / range) * (height - pad * 2);
+  const zeroY = y(0);
+  const efficiencyLine = efficiencies.map((value, index) => `${index ? "L" : "M"} ${pad + (index * (width - pad * 2)) / 11} ${y(value)}`).join(" ");
+  svg.innerHTML = signedChartBase(width, height, pad, min, max, y) + `<line class="zero-axis" x1="${pad}" y1="${zeroY}" x2="${width - pad}" y2="${zeroY}"></line>` + rows.map((row, index) => {
     const x = pad + index * ((width - pad * 2) / 12) + 8;
-    const profit = Math.max(0, calcProfit(row));
-    return `<rect class="bar-profit" x="${x}" y="${y(profit)}" width="${barWidth}" height="${height - pad - y(profit)}"></rect>`;
-  }).join("");
+    const profit = calcProfit(row);
+    const top = Math.min(y(profit), zeroY);
+    return `<rect class="${profit < 0 ? "bar-profit-negative" : "bar-profit"}" x="${x}" y="${top}" width="${barWidth}" height="${Math.abs(y(profit) - zeroY)}"></rect>`;
+  }).join("") + `<path class="line-efficiency" d="${efficiencyLine}"></path>
+    ${efficiencies.map((value, index) => `<circle class="dot-efficiency" cx="${pad + (index * (width - pad * 2)) / 11}" cy="${y(value)}" r="3"></circle>`).join("")}
+    <text class="label" x="${width - 150}" y="24">長條：盈餘　折線：人效</text>`;
 }
 
 function drawGapChart(svg, rows) {
   const width = 980;
   const height = 260;
   const pad = 42;
-  const max = Math.max(1, ...rows.map((row) => Math.abs(monthlyPartnerRevenue(row.month) - row.targetRevenue)));
-  const zeroY = height / 2;
+  const max = Math.max(1, ...rows.map((row) => Math.max(num(row.targetRevenue), monthlyPartnerRevenue(row.month))));
+  const baseY = height - pad;
   const barWidth = (width - pad * 2) / 12 * 0.58;
-  svg.innerHTML = `
-    <line class="axis" x1="${pad}" y1="${zeroY}" x2="${width - pad}" y2="${zeroY}"></line>
+  const y = (value) => baseY - (value / max) * (height - pad * 2);
+  svg.innerHTML = chartBase(width, height, pad, max) + `
     ${rows.map((row, index) => {
-      const gap = monthlyPartnerRevenue(row.month) - row.targetRevenue;
+      const target = Math.max(0, num(row.targetRevenue));
+      const actual = Math.max(0, monthlyPartnerRevenue(row.month));
       const x = pad + index * ((width - pad * 2) / 12) + 10;
-      const h = Math.abs(gap) / max * (height / 2 - pad);
-      const y = gap >= 0 ? zeroY - h : zeroY;
-      return `<rect class="${gap >= 0 ? "bar-gap-positive" : "bar-gap-negative"}" x="${x}" y="${y}" width="${barWidth}" height="${h}"></rect>
-        <text class="label" x="${x}" y="${height - 12}">${row.month}月</text>`;
+      const fillHeight = baseY - y(actual);
+      return `<rect class="bar-target-outline" x="${x}" y="${y(target)}" width="${barWidth}" height="${baseY - y(target)}"></rect>
+        ${actual > 0 ? `<rect class="bar-actual-fill" x="${x}" y="${y(actual)}" width="${barWidth}" height="${fillHeight}"></rect>` : ""}
+        <text class="bar-value bar-target-value" x="${x + barWidth / 2}" y="${Math.max(13, y(target) - 7)}">目標 ${money(target)}</text>
+        ${actual > 0 ? `<text class="bar-value bar-actual-value" x="${x + barWidth / 2}" y="${Math.max(25, y(actual) + 15)}">業績 ${money(actual)}</text>` : ""}`;
     }).join("")}
   `;
+}
+
+function signedChartBase(width, height, pad, min, max, y) {
+  return `${[0, .25, .5, .75, 1].map((ratio) => {
+    const value = min + (max - min) * ratio;
+    const lineY = y(value);
+    return `<line class="grid-line" x1="${pad}" y1="${lineY}" x2="${width - pad}" y2="${lineY}"></line>
+      <text class="label" x="3" y="${lineY + 4}">${Math.round(value)}</text>`;
+  }).join("")}
+  ${monthLabels.map((label, index) => `<text class="label" x="${pad + (index * (width - pad * 2)) / 11 - 10}" y="${height - 12}">${label}</text>`).join("")}`;
 }
 
 function chartBase(width, height, pad, max) {
