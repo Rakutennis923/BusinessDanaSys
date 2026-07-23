@@ -859,7 +859,10 @@ dialog::backdrop { background: rgba(30, 41, 48, .5); backdrop-filter: blur(2px);
     </div>
     <div class="ai-dialog-body" id="aiModalContent"></div>
     <div class="ai-dialog-footer">
-      <span style="font-size: 11px; color: var(--muted); font-weight: 800;">由 Gemini 3 Flash 模型驅動</span>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="font-size: 11px; color: var(--muted); font-weight: 800;">由 Gemini 3 Flash 模型驅動</span>
+        <button id="aiModalSettingsBtn" type="button" style="min-height:28px; padding:0 8px; font-size:11px; background:#eef4f1; border:1px solid var(--line); border-radius:6px; cursor:pointer;">⚙️ API Key 設定</button>
+      </div>
       <button class="primary" id="aiModalCopyBtn" type="button">一鍵複製內容</button>
     </div>
   </dialog>
@@ -921,6 +924,31 @@ dialog::backdrop { background: rgba(30, 41, 48, .5); backdrop-filter: blur(2px);
     </div>
   </dialog>
 
+  <dialog id="apiKeyDialog">
+    <div class="person-dialog">
+      <div class="dialog-head">
+        <h2>⚙️ 設定 Gemini API Key</h2>
+        <button class="icon-button" id="apiKeyDialogClose" type="button" aria-label="關閉">×</button>
+      </div>
+      <p style="font-size:13px; color:var(--muted); margin-top:8px; line-height:1.5;">
+        在 GitHub Pages 上需要提供您的免費 Google Gemini API Key 才能啟用 AI 診斷與教練功能。<br>
+        <strong style="color:var(--green);">註：金鑰僅會儲存在您的本機瀏覽器中，不會外洩。</strong>
+      </p>
+      <div style="margin: 14px 0;">
+        <label>Gemini API Key
+          <input id="apiKeyInput" type="password" placeholder="貼上 AIzaSy開頭的金鑰..." style="margin-top:6px;">
+        </label>
+      </div>
+      <p style="font-size:12px; margin-bottom:14px;">
+        👉 <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" style="color:var(--blue); font-weight:900; text-decoration:underline;">點此前往 Google AI Studio 免費申請 API Key</a>
+      </p>
+      <div class="dialog-actions">
+        <button id="apiKeyDialogClear" type="button" style="color:var(--red);">清除金鑰</button>
+        <button class="primary" id="apiKeyDialogSave" type="button">儲存金鑰</button>
+      </div>
+    </div>
+  </dialog>
+
   <div id="toastContainer"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -929,6 +957,7 @@ dialog::backdrop { background: rgba(30, 41, 48, .5); backdrop-filter: blur(2px);
 const STORAGE_KEY = "danan-business-admin-v2";
 const CLOUD_API_URL = "https://script.google.com/macros/s/AKfycby_YVfqeWsBQlHtkd1d5tILCXz3qTcIL7uAmlRI1K2Kp8xjVvxHTU7Jupw8O0nHUinz/exec";
 const PARTNER_MONTH_STORAGE_KEY = "danan-partner-last-month-v1";
+const GEMINI_KEY_STORAGE_KEY = "danan-gemini-api-key-v1";
 let cloudSyncTimer = null;
 let cloudInitialLoadComplete = false;
 let cloudSavePending = false;
@@ -949,8 +978,86 @@ const EXCLUDED_PARTNER_NAMES = new Set(["單月店冠軍", "其他", "總計"]);
 
 let state = loadState();
 
+function getGeminiApiKey() {
+  return localStorage.getItem(GEMINI_KEY_STORAGE_KEY) || "";
+}
+
+function setGeminiApiKey(key) {
+  if (key && key.trim()) {
+    localStorage.setItem(GEMINI_KEY_STORAGE_KEY, key.trim());
+  } else {
+    localStorage.removeItem(GEMINI_KEY_STORAGE_KEY);
+  }
+}
+
+function openApiKeyDialog(onSaved) {
+  const dialog = document.querySelector("#apiKeyDialog");
+  const input = document.querySelector("#apiKeyInput");
+  const btnClose = document.querySelector("#apiKeyDialogClose");
+  const btnSave = document.querySelector("#apiKeyDialogSave");
+  const btnClear = document.querySelector("#apiKeyDialogClear");
+  if (!dialog || !input) return;
+
+  input.value = getGeminiApiKey();
+
+  const handleSave = () => {
+    const val = input.value.trim();
+    if (!val) {
+      showToast("請輸入 API Key 或選擇取消", "warning");
+      return;
+    }
+    setGeminiApiKey(val);
+    cleanup();
+    dialog.close();
+    showToast("Gemini API Key 已成功儲存！");
+    if (onSaved) onSaved(val);
+  };
+
+  const handleClear = () => {
+    setGeminiApiKey("");
+    input.value = "";
+    cleanup();
+    dialog.close();
+    showToast("已清除 API Key");
+    if (onSaved) onSaved("");
+  };
+
+  const handleClose = () => {
+    cleanup();
+    dialog.close();
+  };
+
+  function cleanup() {
+    btnSave?.removeEventListener("click", handleSave);
+    btnClear?.removeEventListener("click", handleClear);
+    btnClose?.removeEventListener("click", handleClose);
+  }
+
+  btnSave?.addEventListener("click", handleSave);
+  btnClear?.addEventListener("click", handleClear);
+  btnClose?.addEventListener("click", handleClose);
+
+  dialog.showModal();
+}
+
+async function promptForApiKey() {
+  return new Promise((resolve) => {
+    openApiKeyDialog((key) => {
+      resolve(key);
+    });
+  });
+}
+
 async function callGeminiAPI(prompt, systemInstruction = "") {
-  const apiKey = ""; // Canvas environment automatically passes runtime API key
+  let apiKey = getGeminiApiKey();
+
+  if (!apiKey) {
+    apiKey = await promptForApiKey();
+    if (!apiKey) {
+      throw new Error("未提供 Gemini API Key。請設定金鑰後再試一次。");
+    }
+  }
+
   const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
 
   const payload = {
@@ -972,6 +1079,9 @@ async function callGeminiAPI(prompt, systemInstruction = "") {
         body: JSON.stringify(payload)
       });
       
+      if (response.status === 403 || response.status === 400) {
+        throw new Error(`API 金鑰無效或權限受限 (HTTP ${response.status})。請重新檢查或更新 API Key。`);
+      }
       if (!response.ok) throw new Error(`Gemini API Error: ${response.status}`);
       
       const result = await response.json();
@@ -979,7 +1089,7 @@ async function callGeminiAPI(prompt, systemInstruction = "") {
       if (text) return text;
       throw new Error("模型回應格式異常。");
     } catch (err) {
-      if (attempt === 2) throw err;
+      if (err.message.includes("API 金鑰無效") || attempt === 2) throw err;
       await new Promise(res => setTimeout(res, delay));
       delay *= 2;
     }
@@ -1061,10 +1171,19 @@ function showAiModal(title, contentPromise) {
     .catch((error) => {
       console.error(error);
       contentEl.innerHTML = `
-        <div style="padding: 20px; color: var(--red); text-align: center; font-weight: 800;">
-          <p>⚠️ AI 生成異常：${escapeHtml(error.message || '無法取得 AI 建議')}</p>
+        <div style="padding: 20px; text-align: center; font-weight: 800;">
+          <p style="color: var(--red); font-size: 15px;">⚠️ AI 生成異常：${escapeHtml(error.message || '無法取得 AI 建議')}</p>
+          <p style="font-size: 13px; color: var(--muted); margin-top: 10px; line-height:1.5;">
+            在獨立網頁 (GitHub Pages) 上使用 AI 需要設定您的免費 Gemini API Key。
+          </p>
+          <button class="primary" id="aiResetKeyBtn" type="button" style="margin-top: 14px;">⚙️ 設定 / 更新 Gemini API Key</button>
         </div>
       `;
+      document.querySelector("#aiResetKeyBtn")?.addEventListener("click", () => {
+        openApiKeyDialog(() => {
+          showToast("API Key 已更新，請重新點擊 AI 診斷按鈕。");
+        });
+      });
     });
 }
 
@@ -1459,6 +1578,9 @@ function bindEvents() {
   if (els.aiCompanyBtn) els.aiCompanyBtn.addEventListener("click", handleAiOverviewDiagnosis);
   if (els.aiLineBroadcastBtn) els.aiLineBroadcastBtn.addEventListener("click", handleAiLineBroadcast);
   if (els.aiModalClose) els.aiModalClose.addEventListener("click", () => els.aiModal.close());
+  
+  const aiSettingsBtn = document.querySelector("#aiModalSettingsBtn");
+  if (aiSettingsBtn) aiSettingsBtn.addEventListener("click", () => openApiKeyDialog());
 
   els.partnerMonth.addEventListener("change", () => {
     partnerFormDirty = false;
