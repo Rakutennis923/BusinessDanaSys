@@ -4,7 +4,1204 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>太平洋房屋 友成大湳店 業務行政系統</title>
-  <link rel="stylesheet" href="styles.css?v=20260722-target-gap-labels-3">
+
+  <style>
+:root {
+  --bg: #f3f8fb;
+  --ink: #1e2930;
+  --muted: #647076;
+  --panel: #ffffff;
+  --line: #d8e4e7;
+  --green: #1f7a5f;
+  --green-dark: #0d4e3d;
+  --blue: #2563a8;
+  --red: #b42318;
+  --yellow: #f2c94c;
+  --amber: #ad7d13;
+  --ai-purple: #6366f1;
+  --ai-gold: #d97706;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Microsoft JhengHei", "PingFang TC", system-ui, sans-serif;
+}
+
+button, input, select, dialog, textarea { font: inherit; }
+
+.shell {
+  width: min(1240px, calc(100% - 28px));
+  margin: 0 auto;
+  padding: 24px 0 44px;
+}
+
+.app-header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: end;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.app-header > div:first-child {
+  grid-column: 2;
+  justify-self: center;
+  text-align: center;
+}
+
+.year-picker {
+  grid-column: 3;
+  justify-self: end;
+}
+
+.eyebrow {
+  margin: 0 0 6px;
+  color: var(--green);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+h1, h2, h3, p { margin-top: 0; }
+h1 { margin-bottom: 0; font-size: clamp(24px, 3.2vw, 36px); }
+h2 { margin-bottom: 8px; font-size: 22px; }
+h3 { margin-bottom: 10px; font-size: 16px; }
+
+.brand-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.brand-title-main {
+  display: block;
+  color: var(--ink);
+  font-size: clamp(22px, 2.2vw, 30px);
+  font-weight: 900;
+}
+
+.brand-title-sub {
+  display: inline-block;
+  width: fit-content;
+  max-width: 100%;
+  background: linear-gradient(135deg, #173f52, #1f7a5f);
+  color: #f7fbf8;
+  border: 1px solid rgba(255, 255, 255, .25);
+  border-radius: 7px;
+  padding: 5px 10px 6px;
+  font-size: clamp(18px, 1.8vw, 24px);
+  font-weight: 900;
+  letter-spacing: 0;
+  box-shadow: 0 6px 16px rgba(23, 63, 82, .12);
+}
+
+label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+input, select {
+  width: 100%;
+  height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  padding: 0 10px;
+}
+
+button {
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  padding: 0 14px;
+  cursor: pointer;
+  font-weight: 800;
+  transition: all 0.2s ease;
+}
+
+button:hover {
+  filter: brightness(0.97);
+}
+
+.primary, .tab.active {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+}
+
+/* AI Specialized Buttons */
+.ai-btn {
+  background: linear-gradient(135deg, #0d4e3d 0%, #1f7a5f 50%, #2563a8 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(13, 78, 61, 0.25);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-weight: 900;
+}
+
+.ai-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(13, 78, 61, 0.35);
+  background: linear-gradient(135deg, #12624e 0%, #258a6e 50%, #2c72be 100%);
+}
+
+.ai-btn-sm {
+  min-height: 32px;
+  padding: 0 10px;
+  font-size: 12px;
+  border-radius: 6px;
+}
+
+.ai-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+  color: #3730a3;
+  font-size: 11px;
+  font-weight: 900;
+  margin-left: 6px;
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.mobile-year-picker {
+  display: none;
+}
+
+.view { display: none; }
+.view.active { display: block; }
+
+.offers-view {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.offers-frame {
+  display: block;
+  width: 100%;
+  min-height: calc(100vh - 190px);
+  height: 1200px;
+  border: 0;
+  background: #f2f8f5;
+}
+
+.offers-view { border: 0; background: transparent; overflow: visible; }
+.offer-hero { display:flex; justify-content:space-between; align-items:end; gap:20px; padding:24px; border-radius:18px; background:linear-gradient(135deg,#0d4e3d,#16735b); color:#fff; box-shadow:0 14px 34px rgba(13,78,61,.16); }
+.offer-hero p,.offer-hero span { margin:0; color:#d8f0e8; font-weight:800; }
+.offer-hero h2 { margin:5px 0 8px; color:#fff; font-size:30px; }
+.offer-summary { display:grid; flex:1; grid-template-columns:repeat(6,minmax(86px,1fr)); gap:8px; }
+.offer-summary button { width:100%; min-width:0; padding:12px; border:1px solid rgba(255,255,255,.28); border-radius:12px; background:rgba(255,255,255,.1); color:#fff; text-align:center; cursor:pointer; transition:transform .16s ease,background .16s ease,box-shadow .16s ease; }
+.offer-summary button:hover { transform:translateY(-2px); background:rgba(255,255,255,.18); }
+.offer-summary button:focus-visible { outline:3px solid #ffd95a; outline-offset:2px; }
+.offer-summary button.active { background:#fff; color:#12624e; box-shadow:0 8px 18px rgba(0,0,0,.16); }
+.offer-summary button.active span { color:#12624e; }
+.offer-summary span { display:block; min-height:28px; font-size:11px; }
+.offer-summary strong { display:block; margin-top:3px; font-size:28px; }
+.offer-panel { margin-top:14px; padding:18px; border:1px solid var(--line); border-radius:14px; background:#fff; }
+.offer-import-panel,.offer-section-head,.offer-cards-toolbar { display:flex; justify-content:space-between; align-items:center; gap:16px; }
+.offer-panel h3 { margin:0; font-size:19px; }
+.offer-panel p { margin:3px 0 0; color:var(--muted); font-size:13px; font-weight:800; }
+.offer-import-actions,.offer-form-actions { display:flex; gap:8px; flex-wrap:wrap; }
+.offer-form-trigger,.offer-form-backdrop,.offer-form-drawer-head { display:none; }
+.offer-file-button { display:flex; place-items:center; min-height:40px; padding:0 14px; border-radius:8px; background:var(--green); color:#fff; cursor:pointer; }
+.offer-file-button input { position:absolute; width:1px; height:1px; opacity:0; }
+.offer-form { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-top:16px; }
+.offer-wide { grid-column:1/-1; }
+.offer-date-range { grid-column:1/-1; display:grid; grid-template-columns:1fr auto 1fr; align-items:end; gap:10px; margin:0; padding:12px; border:1px solid var(--line); border-radius:10px; background:#f3f8f5; }
+.offer-date-range legend { padding:0 6px; color:var(--green); font-weight:900; }
+.offer-date-range>span { padding-bottom:12px; color:var(--green); font-weight:900; }
+.offer-form textarea { min-height:76px; padding:10px; border:1px solid var(--line); border-radius:8px; resize:vertical; }
+.offer-fee-input { display:grid; grid-template-columns:1fr 78px; gap:6px; }
+.offer-cards-toolbar { margin-bottom:14px; }
+.offer-filters { display:flex; flex-wrap:wrap; gap:5px; padding:4px; border-radius:10px; background:#eef4f1; }
+.offer-filters button { min-height:34px; border:0; background:transparent; }
+.offer-filters button.active { background:#fff; color:var(--green); box-shadow:0 2px 8px rgba(20,70,55,.12); }
+.offer-cards-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+.offer-card { padding:16px; border:1px solid var(--line); border-top:5px solid var(--green); border-radius:14px; background:#fff; box-shadow:0 7px 20px rgba(27,71,57,.06); }
+.offer-card.urgent { border-top-color:#c52c2c; }
+.offer-card.expired { border-color:#153a5b; background:#153a5b; color:#fff; }
+.offer-card.withdrawn { border-color:#4a4f54; background:#4a4f54; color:#fff; }
+.offer-card.closed { border-color:#bd1f25; background:#bd1f25; color:#fff; }
+.offer-card-top { display:flex; justify-content:space-between; gap:12px; align-items:start; }
+.offer-card-top small { color:var(--muted); font-weight:900; }
+.offer-card.expired small,.offer-card.withdrawn small,.offer-card.closed small { color:#f2d8d8; }
+.offer-card h4 { margin:3px 0 0; font-size:18px; }
+.offer-status { flex:none; padding:5px 9px; border-radius:999px; background:#e1f4eb; color:var(--green); font-size:12px; font-weight:900; }
+.offer-card.expired .offer-status { background:#e9f2ff; color:#153a5b; }
+.offer-card.withdrawn .offer-status { background:#e5e7e9; color:#3f454a; }
+.offer-card.closed .offer-status { background:#ffe75c; color:#8b151b; }
+.offer-details { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1px; margin:14px 0 0; overflow:hidden; border:1px solid var(--line); border-radius:10px; background:var(--line); }
+.offer-details div { min-width:0; padding:9px 10px; background:#fbfdfc; }
+.offer-details .wide { grid-column:1/-1; }
+.offer-details dt { color:var(--muted); font-size:11px; font-weight:800; }
+.offer-details dd { margin:3px 0 0; overflow-wrap:anywhere; font-weight:900; }
+.offer-card.expired .offer-details,.offer-card.withdrawn .offer-details,.offer-card.closed .offer-details { border-color:rgba(255,255,255,.22); background:rgba(255,255,255,.18); }
+.offer-card.expired .offer-details div,.offer-card.withdrawn .offer-details div,.offer-card.closed .offer-details div { background:rgba(255,255,255,.07); }
+.offer-card.expired dt,.offer-card.withdrawn dt,.offer-card.closed dt { color:#f4dddd; }
+.offer-status-date { background:#fff8db !important; color:#6d5510; }
+.offer-card.expired .offer-status-date,.offer-card.withdrawn .offer-status-date,.offer-card.closed .offer-status-date { background:rgba(255,231,79,.17) !important; color:#fff6b7; }
+.offer-countdown { margin-top:12px; padding:12px; border-radius:10px; background:#fff0f0; color:#c52c2c; text-align:center; font-size:22px; font-weight:1000; }
+.offer-card.expired .offer-countdown,.offer-card.withdrawn .offer-countdown { background:rgba(255,255,255,.12); color:#fff; }
+.offer-card.closed .offer-countdown { background:rgba(106,0,5,.28); color:#ffe74f; font-size:clamp(28px,5vw,44px); letter-spacing:.12em; }
+.offer-card-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:7px; margin-top:10px; }
+.offer-card-actions button { min-height:34px; padding:0 11px; font-size:12px; }
+.offer-card-actions .refund { background:#fff1ef; color:#a6291a; }
+.offer-card-actions .deal { background:#fff3a2; color:#8b151b; }
+.offer-card.expired .offer-card-actions button,.offer-card.withdrawn .offer-card-actions button,.offer-card.closed .offer-card-actions button { border-color:rgba(255,255,255,.38); background:rgba(255,255,255,.12); color:#fff; }
+.offer-empty { grid-column:1/-1; padding:45px 16px; border:2px dashed var(--line); border-radius:12px; text-align:center; color:var(--muted); font-weight:900; }
+.offer-archive { grid-column:1/-1; max-width:720px; width:100%; margin:8px auto; padding:14px; border:1px solid #b9c8c3; border-radius:18px; background:#e5ede9; box-shadow:7px 7px 0 #d4dfda,14px 14px 0 #c4d2cc; }
+.offer-archive-head { display:flex; justify-content:space-between; gap:12px; margin-bottom:10px; }
+.offer-archive-head strong { display:block; font-size:19px; }
+.offer-archive-head span { color:var(--muted); font-weight:800; }
+.offer-archive-controls { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:10px; margin-top:10px; }
+.offer-archive-controls span { text-align:center; font-weight:900; }
+.offer-archive-controls button:disabled { opacity:.4; }
+
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.section-head p {
+  color: var(--muted);
+  margin-bottom: 0;
+}
+
+.section-head-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.annual-target-panel {
+  display: grid;
+  grid-template-columns: minmax(220px, 320px) minmax(220px, 360px);
+  gap: 12px;
+  margin-bottom: 14px;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.annual-target-panel,
+.kpi, .chart-panel, .chart-box, .entry-panel, .partner-card, .weekly-card, .table-wrap, .import-panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.annual-target-panel {
+  padding: 14px;
+  align-items: end;
+}
+
+.annual-target-display {
+  background: var(--red);
+  color: #fff;
+  border-radius: 8px;
+  padding: 16px 18px;
+}
+
+.annual-target-display span {
+  display: block;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.annual-target-display strong {
+  display: block;
+  margin-top: 4px;
+  font-size: clamp(30px, 4.5vw, 50px);
+  line-height: 1;
+}
+
+.kpi-grid, .partner-grid, .weekly-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.kpi { padding: 16px; }
+
+.kpi:nth-child(2) {
+  background: #fff8df;
+  border-color: var(--yellow);
+}
+
+.kpi:nth-child(4) {
+  background: #eaf4ff;
+  border-color: #9dc4ee;
+}
+
+.kpi span {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.kpi strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 26px;
+}
+
+.kpi small { color: var(--muted); }
+
+.chart-panel { padding: 16px; }
+
+.chart-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.chart-box { padding: 14px; }
+.chart-box.wide { grid-column: 1 / -1; }
+
+svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.axis, .grid-line { stroke: #d7ded8; stroke-width: 1; }
+.line-real { fill: none; stroke: var(--green); stroke-width: 3; }
+.line-target { fill: none; stroke: var(--blue); stroke-width: 3; stroke-dasharray: 7 5; }
+.bar-profit { fill: rgba(31, 122, 95, .72); }
+.bar-profit-negative { fill: rgba(180, 35, 24, .78); }
+.zero-axis { stroke: #475569; stroke-width: 1.5; }
+.line-efficiency { fill: none; stroke: var(--blue); stroke-width: 2.5; }
+.dot-efficiency { fill: var(--blue); }
+.bar-target-outline { fill: transparent; stroke: var(--blue); stroke-width: 2; }
+.bar-actual-fill { fill: rgba(31, 122, 95, .78); }
+.bar-value { text-anchor: middle; font-size: 11px; font-weight: 800; }
+.bar-target-value { fill: var(--blue); }
+.bar-actual-value { fill: #fff; paint-order: stroke; stroke: rgba(0,0,0,.28); stroke-width: 2px; }
+.bar-gap-value { text-anchor: middle; font-size: 13px; font-weight: 900; }
+.bar-gap-value.positive { fill: #16855b; }
+.bar-gap-value.negative { fill: #d13d45; }
+.bar-gap-value.equal { fill: #526070; }
+.bar-gap-positive { fill: rgba(31, 122, 95, .75); }
+.bar-gap-negative { fill: rgba(180, 35, 24, .75); }
+.dot { fill: var(--green); }
+.label { fill: var(--muted); font-size: 12px; }
+
+.table-wrap { overflow-x: auto; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1100px;
+}
+
+th, td {
+  border-bottom: 1px solid var(--line);
+  padding: 10px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+th {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+td input { min-width: 92px; }
+
+.total-row {
+  background: #eef7f3;
+  border-top: 2px solid var(--green);
+}
+
+.total-row td {
+  font-weight: 900;
+  color: var(--ink);
+}
+
+.total-row td:first-child {
+  color: var(--green);
+  font-size: 18px;
+}
+
+.selected-row {
+  background: #eef7f3;
+  outline: 2px solid rgba(31, 122, 95, .25);
+}
+
+.overview-detail-table {
+  margin-bottom: 12px;
+}
+
+.toolbar {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(180px, 260px));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.entry-panel {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.partner-form { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.partner-form-trigger,
+.partner-form-backdrop,
+.partner-form-drawer-head {
+  display: none;
+}
+.weekly-form { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.person-form { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.wide-field { grid-column: 1 / -1; }
+
+.import-panel {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) auto auto;
+  gap: 12px;
+  align-items: end;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.import-panel span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.partner-card, .weekly-card { padding: 14px; position: relative; }
+.partner-card h3, .weekly-card h3 { margin-bottom: 4px; }
+.partner-card-actions { margin-top: 10px; display: flex; gap: 6px; justify-content: flex-end; }
+
+.partner-card.card-low { border: 4px solid var(--green); }
+.partner-card.card-mid { border: 4px solid var(--blue); }
+.partner-card.card-high { border: 4px solid var(--red); }
+
+.metric-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.metric {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  background: #fbfcfb;
+  min-width: 0;
+}
+
+.metric span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.metric strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 19px;
+  overflow-wrap: anywhere;
+}
+
+.progress {
+  height: 9px;
+  border-radius: 999px;
+  background: #e6ebe7;
+  overflow: hidden;
+}
+
+.progress span {
+  display: block;
+  width: var(--value);
+  height: 100%;
+  background: var(--green);
+}
+
+.advice {
+  margin: 10px 0 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.completed-list {
+  margin: 10px 0 0;
+  padding: 10px;
+  border-radius: 8px;
+  background: #fff8df;
+  color: var(--ink);
+  line-height: 1.55;
+}
+
+.status-good { color: var(--green); }
+.status-watch { color: var(--amber); }
+.status-risk { color: var(--red); }
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.status-pill.active {
+  color: var(--green);
+  background: #e8f6ef;
+}
+
+.status-pill.inactive {
+  color: var(--red);
+  background: #fff1f0;
+}
+
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.row-actions button {
+  min-height: 34px;
+  padding: 0 10px;
+}
+
+.danger-action {
+  color: var(--red);
+}
+
+.inactive-name {
+  color: var(--muted);
+}
+
+dialog {
+  width: min(840px, calc(100vw - 24px));
+  border: 0;
+  border-radius: 12px;
+  box-shadow: 0 22px 55px rgba(30, 41, 48, .22);
+  padding: 0;
+}
+
+dialog::backdrop {
+  background: rgba(30, 41, 48, .42);
+}
+
+.person-dialog {
+  padding: 18px;
+}
+
+#overviewDetailDialog .person-dialog {
+  max-height: min(760px, calc(100vh - 28px));
+  overflow: auto;
+}
+
+#overviewDetailBody {
+  margin-top: 12px;
+}
+
+.dialog-head,
+.dialog-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.dialog-actions {
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
+.icon-button {
+  width: 40px;
+  padding: 0;
+  font-size: 24px;
+  line-height: 1;
+}
+
+/* AI Dialog Styles */
+.ai-dialog-header {
+  background: linear-gradient(135deg, #0d4e3d 0%, #1f7a5f 100%);
+  color: #ffffff;
+  padding: 16px 20px;
+  border-radius: 12px 12px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ai-dialog-header h2 {
+  margin: 0;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #ffffff;
+}
+
+.ai-dialog-header .close-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 0;
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  border-radius: 50%;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ai-dialog-header .close-btn:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.ai-dialog-body {
+  padding: 20px;
+  max-height: 68vh;
+  overflow-y: auto;
+  line-height: 1.7;
+  color: #1e2930;
+  font-size: 15px;
+}
+
+.ai-dialog-body h3 {
+  color: #0d4e3d;
+  border-left: 4px solid #1f7a5f;
+  padding-left: 8px;
+  margin-top: 18px;
+  margin-bottom: 8px;
+  font-size: 17px;
+}
+
+.ai-dialog-body ul {
+  padding-left: 20px;
+  margin-top: 6px;
+  margin-bottom: 12px;
+}
+
+.ai-dialog-body li {
+  margin-bottom: 6px;
+}
+
+.ai-dialog-footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fbfcfb;
+  border-radius: 0 0 12px 12px;
+}
+
+.ai-loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  gap: 16px;
+}
+
+.ai-spinner {
+  width: 44px;
+  height: 44px;
+  border: 4px solid #d8e4e7;
+  border-top-color: #1f7a5f;
+  border-radius: 50%;
+  animation: ai-spin 0.9s infinite linear;
+}
+
+@keyframes ai-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.people-table table {
+  min-width: 980px;
+}
+
+.people-card-list {
+  display: none;
+}
+
+.person-card,
+.people-empty {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.person-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.person-card-head strong {
+  display: block;
+  font-size: 18px;
+}
+
+.person-card-head span:not(.status-pill) {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.person-card-info {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.person-card-info div {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px;
+  min-width: 0;
+}
+
+.person-card-info dt {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.person-card-info dd {
+  margin: 3px 0 0;
+  overflow-wrap: anywhere;
+  font-weight: 800;
+}
+
+.people-empty {
+  color: var(--muted);
+  font-weight: 800;
+  text-align: center;
+}
+
+.compact-only { display: none; }
+
+.link-button {
+  min-height: 0;
+  border: 0;
+  background: transparent;
+  color: var(--blue);
+  padding: 0;
+  text-align: left;
+  text-decoration: underline;
+}
+
+#toastContainer {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  min-width: 260px;
+  max-width: 380px;
+  background: var(--ink);
+  color: #fff;
+  padding: 12px 18px;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+  font-size: 14px;
+  font-weight: 800;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast.warning {
+  background: #b42318;
+}
+
+@media (max-width: 1024px) {
+  .partner-form-trigger {
+    display: block;
+    width: 100%;
+    align-self: end;
+  }
+
+  .partner-form-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    background: rgba(18, 35, 31, 0.48);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.22s ease, visibility 0.22s ease;
+  }
+
+  .partner-form-backdrop.visible {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  #partners .partner-form {
+    display: grid;
+    grid-template-columns: 1fr;
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100;
+    width: min(90vw, 390px);
+    margin: 0;
+    padding: 18px 16px calc(24px + env(safe-area-inset-bottom));
+    border: 0;
+    border-radius: 18px 0 0 18px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    align-content: start;
+    transform: translateX(105%);
+    visibility: hidden;
+    transition: transform 0.25s ease, visibility 0.25s ease;
+    box-shadow: -10px 0 30px rgba(20, 52, 44, 0.2);
+  }
+
+  #partners .partner-form.drawer-open {
+    transform: translateX(0);
+    visibility: visible;
+  }
+
+  .partner-form-drawer-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .partner-form-drawer-head strong {
+    display: block;
+    font-size: 20px;
+  }
+
+  .partner-form-drawer-head span {
+    display: block;
+    margin-top: 3px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .drawer-close {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+    padding: 0;
+    border-radius: 50%;
+    font-size: 30px;
+    line-height: 1;
+  }
+
+  body.drawer-active {
+    overflow: hidden;
+  }
+}
+
+@media (max-width: 1080px) {
+  .kpi-grid, .partner-grid, .weekly-grid, .chart-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .entry-panel, .partner-form, .weekly-form, .person-form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .shell {
+    width: min(100% - 20px, 900px);
+  }
+
+  .app-header {
+    display: block;
+  }
+
+  .app-header > div:first-child,
+  .year-picker {
+    text-align: left;
+  }
+
+  .brand-title {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    white-space: normal;
+  }
+
+  .year-picker {
+    margin-top: 12px;
+  }
+
+  .tabs {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--bg);
+    padding: 8px 0;
+  }
+
+  .view.active {
+    min-height: calc(100vh - 150px);
+  }
+
+  .section-head {
+    align-items: start;
+  }
+
+  .annual-target-panel {
+    width: 100%;
+  }
+
+  .compact-only {
+    display: grid;
+  }
+
+  .table-wrap {
+    border: 0;
+    background: transparent;
+    overflow: visible;
+  }
+
+  .people-table {
+    border: 0;
+    background: transparent;
+  }
+
+  .people-table-desktop {
+    display: none;
+  }
+
+  .people-card-list {
+    display: grid;
+    gap: 10px;
+  }
+
+  table, thead, tbody, tr, td {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+
+  thead { display: none; }
+
+  tr {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-bottom: 10px;
+  }
+
+  td {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+    padding: 9px 0;
+    text-align: right;
+  }
+
+  td::before {
+    content: attr(data-label);
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 800;
+    text-align: left;
+  }
+
+  td input {
+    width: 128px;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .shell {
+    width: 100%;
+    padding: 12px 10px 28px;
+  }
+
+  .app-header, .section-head { display: block; }
+  .year-picker { margin-top: 12px; }
+
+  h1 {
+    font-size: 24px;
+  }
+
+  .brand-title {
+    gap: 7px;
+    margin-top: 4px;
+  }
+
+  .brand-title-main {
+    font-size: clamp(24px, 6.5vw, 30px);
+  }
+
+  .brand-title-sub {
+    font-size: clamp(18px, 4.8vw, 22px);
+    padding: 5px 9px 6px;
+  }
+
+  .tabs {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    padding: 8px 0;
+    background: var(--bg);
+  }
+
+  .app-header .year-picker {
+    display: none;
+  }
+
+  .tabs .mobile-year-picker {
+    display: block;
+    width: 100%;
+    grid-column: 1 / -1;
+    margin: 0;
+  }
+
+  .tabs .mobile-year-picker label {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 5px;
+    min-height: 46px;
+    height: 100%;
+    padding: 0 8px 0 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 900;
+  }
+
+  .tabs .mobile-year-picker select {
+    height: 38px;
+    padding: 0 2px;
+    border: 0;
+    background: transparent;
+    color: var(--ink);
+    font-size: 16px;
+    font-weight: 900;
+  }
+
+  .tab {
+    min-height: 46px;
+  }
+
+  .tab-offers {
+    grid-column: auto;
+  }
+
+  .offers-frame {
+    min-height: calc(100vh - 170px);
+    height: 1450px;
+  }
+
+  .view.active {
+    min-height: calc(100vh - 120px);
+  }
+
+  .chart-panel,
+  .chart-box,
+  .entry-panel,
+  .import-panel,
+  .partner-card,
+  .weekly-card,
+  .kpi,
+  .annual-target-panel {
+    box-shadow: none;
+  }
+
+  .annual-target-panel,
+  .kpi-grid,
+  .partner-grid,
+  .weekly-grid,
+  .chart-grid,
+  .entry-panel,
+  .partner-form,
+  .weekly-form,
+  .person-form,
+  .toolbar,
+  .metric-row,
+  .import-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .section-head-actions {
+    margin-top: 10px;
+    width: 100%;
+  }
+
+  .section-head-actions button {
+    flex: 1;
+  }
+}
+  </style>
 </head>
 <body>
   <main class="shell">
@@ -51,9 +1248,14 @@
       <div class="kpi-grid" id="overviewKpis"></div>
       <section class="chart-panel">
         <div class="section-head">
-          <h2>年度營運狀態</h2>
-          <p>業績、關帳業績、盈餘、人效與預測目標差距</p>
-          <button id="exportOverviewBtn" type="button">匯出年度總覽</button>
+          <div>
+            <h2>年度營運狀態</h2>
+            <p>業績、關帳業績、盈餘、人效與預測目標差距</p>
+          </div>
+          <div class="section-head-actions">
+            <button id="aiOverviewBtn" class="ai-btn" type="button">✨ AI 營運全景診斷</button>
+            <button id="exportOverviewBtn" type="button">匯出年度總覽</button>
+          </div>
         </div>
         <div class="chart-grid">
           <div class="chart-box">
@@ -82,9 +1284,14 @@
 
     <section id="company" class="view">
       <div class="section-head">
-        <h2>公司月營運資料</h2>
-        <p>實際業績由夥伴績效自動加總；盈餘 = 關帳業績 - 固定成本 - 變動成本。</p>
-        <button id="exportCompanyBtn" type="button">匯出月營運</button>
+        <div>
+          <h2>公司月營運資料</h2>
+          <p>實際業績由夥伴績效自動加總；盈餘 = 關帳業績 - 固定成本 - 變動成本。</p>
+        </div>
+        <div class="section-head-actions">
+          <button id="aiCompanyBtn" class="ai-btn" type="button">✨ AI 月營運診斷</button>
+          <button id="exportCompanyBtn" type="button">匯出月營運</button>
+        </div>
       </div>
       <div class="toolbar compact-only">
         <label>
@@ -217,8 +1424,12 @@
       </div>
 
       <section class="offer-panel offer-import-panel">
-        <div><h3>Excel 批次匯入</h3><p id="offerImportStatus">尚未匯入資料</p></div>
-        <div class="offer-import-actions"><button id="offerTemplateBtn" type="button">下載 Excel 範本</button><label class="offer-file-button">選擇 Excel<input id="offerImportFile" type="file" accept=".xlsx,.xls"></label></div>
+        <div><h3>Excel 批次匯入與 LINE 通報</h3><p id="offerImportStatus">尚未匯入資料</p></div>
+        <div class="offer-import-actions">
+          <button id="aiLineBroadcastBtn" class="ai-btn" type="button">✨ 生成 LINE 店務日報</button>
+          <button id="offerTemplateBtn" type="button">下載 Excel 範本</button>
+          <label class="offer-file-button">選擇 Excel<input id="offerImportFile" type="file" accept=".xlsx,.xls"></label>
+        </div>
       </section>
 
       <section class="offer-panel offer-form-panel">
@@ -249,6 +1460,20 @@
       </section>
     </section>
   </main>
+
+  <dialog id="aiModal">
+    <div class="ai-dialog-header">
+      <h2 id="aiModalTitle">✨ Gemini AI 店務智慧助手</h2>
+      <button class="close-btn" id="aiModalClose" type="button" aria-label="關閉">×</button>
+    </div>
+    <div class="ai-dialog-body" id="aiModalContent">
+      <!-- Dynamic AI Content or Loading Spinner -->
+    </div>
+    <div class="ai-dialog-footer">
+      <span style="font-size: 12px; color: var(--muted); font-weight: 800;">由 Gemini 3 Flash 模型驅動分析</span>
+      <button class="primary" id="aiModalCopyBtn" type="button">一鍵複製分析與建議</button>
+    </div>
+  </dialog>
 
   <dialog id="overviewDetailDialog">
     <div class="person-dialog">
@@ -294,7 +1519,2678 @@
     </form>
   </dialog>
 
+  <dialog id="confirmDialog">
+    <div class="person-dialog">
+      <div class="dialog-head">
+        <h2>確認操作</h2>
+      </div>
+      <p id="confirmDialogText" style="margin-top:12px; font-weight:800;"></p>
+      <div class="dialog-actions">
+        <button id="confirmDialogCancel" type="button">取消</button>
+        <button class="primary" id="confirmDialogOk" type="button">確定</button>
+      </div>
+    </div>
+  </dialog>
+
+  <div id="toastContainer"></div>
+
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="app.js?v=20260722-target-gap-labels-3"></script>
+
+  <script>
+const STORAGE_KEY = "danan-business-admin-v2";
+const CLOUD_API_URL = "https://script.google.com/macros/s/AKfycby_YVfqeWsBQlHtkd1d5tILCXz3qTcIL7uAmlRI1K2Kp8xjVvxHTU7Jupw8O0nHUinz/exec";
+const PARTNER_MONTH_STORAGE_KEY = "danan-partner-last-month-v1";
+let cloudSyncTimer = null;
+let cloudInitialLoadComplete = false;
+let cloudSavePending = false;
+let cloudLoadInProgress = false;
+let cloudSaveInProgress = false;
+let cloudWriteHoldUntil = 0;
+let partnerFormDirty = false;
+
+const defaultPartnerNames = [
+  "王沛琳", "王淑貞", "冷蕙名", "余惠如", "宋美珠", "林建智", "林恒儀", "林靂玄",
+  "胡春木", "徐盛雄", "陳光霆", "陳亞琴", "陳柏宏", "陳雅惠", "陳嘉儀", "詹穗芬",
+  "劉志剛", "林婉茹", "黃立鈞", "潘禹璇", "鍾秀琴", "謝心瑀", "簡偉宏", "魏廉庭"
+];
+
+const goalTypes = ["進案", "委託", "帶看", "議價", "廣告", "拜訪", "發DM", "掃街", "收斡", "成交"];
+const monthLabels = Array.from({ length: 12 }, (_, i) => `${i + 1}月`);
+const EXCLUDED_PARTNER_NAMES = new Set(["單月店冠軍", "其他", "總計"]);
+
+let state = loadState();
+
+/**
+ * Gemini 3 Flash API Caller
+ */
+async function callGeminiAPI(prompt, systemInstruction = "") {
+  const apiKey = ""; // Canvas runtime injects API key automatically if left empty
+  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+  const payload = {
+    contents: [{ parts: [{ text: prompt }] }],
+  };
+
+  if (systemInstruction) {
+    payload.systemInstruction = {
+      parts: [{ text: systemInstruction }]
+    };
+  }
+
+  let delay = 1000;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Gemini API Response Error: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (text) return text;
+      throw new Error("Invalid output format from Gemini model.");
+    } catch (err) {
+      if (attempt === 2) throw err;
+      await new Promise(res => setTimeout(res, delay));
+      delay *= 2;
+    }
+  }
+}
+
+function showToast(message, type = "info") {
+  const container = document.querySelector("#toastContainer");
+  if (!container) return;
+  const toast = document.createElement("div");
+  toast.className = `toast ${type === "warning" ? "warning" : ""}`;
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(() => toast.classList.add("show"), 10);
+  setTimeout(() => {
+    toast.classList.remove("show");
+    setTimeout(() => toast.remove(), 300);
+  }, 3200);
+}
+
+function openConfirmDialog(message, onConfirm) {
+  const dialog = document.querySelector("#confirmDialog");
+  const text = document.querySelector("#confirmDialogText");
+  const btnOk = document.querySelector("#confirmDialogOk");
+  const btnCancel = document.querySelector("#confirmDialogCancel");
+  if (!dialog || !text || !btnOk || !btnCancel) return;
+
+  text.textContent = message;
+  const handleOk = () => {
+    cleanup();
+    dialog.close();
+    onConfirm();
+  };
+  const handleCancel = () => {
+    cleanup();
+    dialog.close();
+  };
+  function cleanup() {
+    btnOk.removeEventListener("click", handleOk);
+    btnCancel.removeEventListener("click", handleCancel);
+  }
+  btnOk.addEventListener("click", handleOk);
+  btnCancel.addEventListener("click", handleCancel);
+  dialog.showModal();
+}
+
+function showAiModal(title, contentPromise) {
+  const modal = document.querySelector("#aiModal");
+  const titleEl = document.querySelector("#aiModalTitle");
+  const contentEl = document.querySelector("#aiModalContent");
+  const copyBtn = document.querySelector("#aiModalCopyBtn");
+  
+  if (!modal || !titleEl || !contentEl) return;
+
+  titleEl.innerHTML = title;
+  contentEl.innerHTML = `
+    <div class="ai-loading-container">
+      <div class="ai-spinner"></div>
+      <p style="font-weight: 800; color: var(--green);">✨ Gemini 智慧模型正在進行全景分析與策略生成，請稍候...</p>
+    </div>
+  `;
+  
+  let rawTextResult = "";
+  if (copyBtn) {
+    copyBtn.disabled = true;
+    copyBtn.onclick = () => {
+      if (!rawTextResult) return;
+      const tempTextArea = document.createElement("textarea");
+      tempTextArea.value = rawTextResult;
+      document.body.appendChild(tempTextArea);
+      tempTextArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(tempTextArea);
+      showToast("已成功複製分析內容至剪貼簿！");
+    };
+  }
+
+  modal.showModal();
+
+  contentPromise
+    .then((result) => {
+      rawTextResult = result;
+      contentEl.innerHTML = formatMarkdownToHtml(result);
+      if (copyBtn) copyBtn.disabled = false;
+    })
+    .catch((error) => {
+      console.error(error);
+      contentEl.innerHTML = `
+        <div style="padding: 20px; color: var(--red); text-align: center; font-weight: 800;">
+          <p>⚠️ AI 生成發生異常：${escapeHtml(error.message || '無法取得 AI 建議')}</p>
+          <p style="font-size: 13px; color: var(--muted);">請檢查網路連線或稍後重試。</p>
+        </div>
+      `;
+    });
+}
+
+function formatMarkdownToHtml(markdown) {
+  if (!markdown) return "";
+  let html = escapeHtml(markdown);
+  html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+  html = html.replace(/### (.*?)\n/g, "<h3>$1</h3>");
+  html = html.replace(/## (.*?)\n/g, "<h3 style='font-size:18px;'>$1</h3>");
+  html = html.replace(/^\* (.*?)$/gm, "<li>$1</li>");
+  html = html.replace(/^- (.*?)$/gm, "<li>$1</li>");
+  html = html.replace(/(<li>.*?<\/li>\n?)+/g, "<ul>$&</ul>");
+  html = html.replace(/\n\n/g, "<br><br>");
+  return html;
+}
+
+const els = {
+  yearSelect: document.querySelector("#yearSelect"),
+  mobileYearSelect: document.querySelector("#mobileYearSelect"),
+  annualTargetInput: document.querySelector("#annualTargetInput"),
+  annualTargetDisplay: document.querySelector("#annualTargetDisplay"),
+  overviewKpis: document.querySelector("#overviewKpis"),
+  overviewPartnerTable: document.querySelector("#overviewPartnerTable"),
+  overviewPartnerDetail: document.querySelector("#overviewPartnerDetail"),
+  exportOverviewBtn: document.querySelector("#exportOverviewBtn"),
+  aiOverviewBtn: document.querySelector("#aiOverviewBtn"),
+  aiCompanyBtn: document.querySelector("#aiCompanyBtn"),
+  aiLineBroadcastBtn: document.querySelector("#aiLineBroadcastBtn"),
+  revenueChart: document.querySelector("#revenueChart"),
+  profitChart: document.querySelector("#profitChart"),
+  gapChart: document.querySelector("#gapChart"),
+  companyTable: document.querySelector("#companyTable"),
+  companyMonthSelect: document.querySelector("#companyMonthSelect"),
+  companyImportFile: document.querySelector("#companyImportFile"),
+  companyImportBtn: document.querySelector("#companyImportBtn"),
+  companyImportStatus: document.querySelector("#companyImportStatus"),
+  exportCompanyBtn: document.querySelector("#exportCompanyBtn"),
+  partnerMonth: document.querySelector("#partnerMonth"),
+  partnerName: document.querySelector("#partnerName"),
+  exportPartnersBtn: document.querySelector("#exportPartnersBtn"),
+  partnerImportFile: document.querySelector("#partnerImportFile"),
+  partnerImportStatus: document.querySelector("#partnerImportStatus"),
+  partnerForm: document.querySelector("#partnerForm"),
+  openPartnerFormBtn: document.querySelector("#openPartnerFormBtn"),
+  closePartnerFormBtn: document.querySelector("#closePartnerFormBtn"),
+  partnerFormBackdrop: document.querySelector("#partnerFormBackdrop"),
+  partnerFormContext: document.querySelector("#partnerFormContext"),
+  annualRevenueTarget: document.querySelector("#annualRevenueTarget"),
+  actualRevenue: document.querySelector("#actualRevenue"),
+  actualListings: document.querySelector("#actualListings"),
+  actualOffers: document.querySelector("#actualOffers"),
+  actualClosings: document.querySelector("#actualClosings"),
+  partnerCards: document.querySelector("#partnerCards"),
+  weeklyImportFile: document.querySelector("#weeklyImportFile"),
+  importStatus: document.querySelector("#importStatus"),
+  weeklyForm: document.querySelector("#weeklyForm"),
+  weeklyDate: document.querySelector("#weeklyDate"),
+  weeklyPartner: document.querySelector("#weeklyPartner"),
+  weeklyType: document.querySelector("#weeklyType"),
+  weeklyTarget: document.querySelector("#weeklyTarget"),
+  weeklyActual: document.querySelector("#weeklyActual"),
+  weeklyFilterPartner: document.querySelector("#weeklyFilterPartner"),
+  weeklyBoard: document.querySelector("#weeklyBoard"),
+  exportWeeklyBtn: document.querySelector("#exportWeeklyBtn"),
+  newPersonBtn: document.querySelector("#newPersonBtn"),
+  peopleStatusFilter: document.querySelector("#peopleStatusFilter"),
+  peopleSearch: document.querySelector("#peopleSearch"),
+  peopleTable: document.querySelector("#peopleTable"),
+  overviewDetailDialog: document.querySelector("#overviewDetailDialog"),
+  overviewDetailTitle: document.querySelector("#overviewDetailTitle"),
+  overviewDetailBody: document.querySelector("#overviewDetailBody"),
+  overviewDetailClose: document.querySelector("#overviewDetailClose"),
+  overviewDetailCloseBottom: document.querySelector("#overviewDetailCloseBottom"),
+  personDialog: document.querySelector("#personDialog"),
+  personDialogTitle: document.querySelector("#personDialogTitle"),
+  personId: document.querySelector("#personId"),
+  personName: document.querySelector("#personName"),
+  personBranch: document.querySelector("#personBranch"),
+  personTitle: document.querySelector("#personTitle"),
+  personPhone: document.querySelector("#personPhone"),
+  personEmail: document.querySelector("#personEmail"),
+  personHireDate: document.querySelector("#personHireDate"),
+  personExitDate: document.querySelector("#personExitDate"),
+  personStatus: document.querySelector("#personStatus"),
+  personSort: document.querySelector("#personSort"),
+  personNote: document.querySelector("#personNote"),
+  savePersonBtn: document.querySelector("#savePersonBtn"),
+  aiModalClose: document.querySelector("#aiModalClose"),
+  aiModal: document.querySelector("#aiModal")
+};
+
+init();
+
+async function init() {
+  setupSelects();
+  bindEvents();
+  render();
+  await loadCloudState();
+  window.setInterval(() => {
+    if (document.visibilityState === "visible") loadCloudState();
+  }, 30000);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") loadCloudState();
+  });
+}
+
+function loadState() {
+  const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+  if (saved) return normalizeState(saved);
+
+  const year = new Date().getFullYear();
+  return {
+    year,
+    annualTargets: { [year]: 6000 },
+    company: seedCompany(year),
+    people: seedPeople(),
+    partners: seedLastYear(year),
+    weekly: [],
+    offers: loadLegacyOfferRecords()
+  };
+}
+
+function normalizeState(raw) {
+  const partnerRows = (raw.partners || []).filter((record) => !isExcludedPartnerName(record.partnerName));
+  const weeklyRows = (raw.weekly || []).filter((record) => !isExcludedPartnerName(record.partnerName));
+  const people = normalizePeople(raw.people, partnerRows, weeklyRows);
+  return {
+    year: raw.year || new Date().getFullYear(),
+    annualTargets: raw.annualTargets || { [raw.year || new Date().getFullYear()]: 6000 },
+    company: (raw.company || []).map((row) => {
+      const closedRevenue = Number(row.closedRevenue) || Number(row.actualRevenue) || 0;
+      const profit = row.profit !== undefined
+        ? Number(row.profit) || 0
+        : closedRevenue - (Number(row.fixedCost) || 0) - (Number(row.variableCost) || 0);
+      return {
+        ...row,
+        closedRevenue,
+        actualRevenue: Number(row.actualRevenue) || 0,
+        profit
+      };
+    }),
+    people,
+    partners: partnerRows.map((record) => normalizePartnerRecord(record, people)),
+    weekly: weeklyRows.map((goal) => normalizeWeeklyGoal(goal, people)),
+    offers: Array.isArray(raw.offers) ? raw.offers : loadLegacyOfferRecords()
+  };
+}
+
+function loadLegacyOfferRecords() {
+  try {
+    const saved = JSON.parse(localStorage.getItem("danan-offer-tracker-static-v1") || "[]");
+    return Array.isArray(saved) ? saved : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+function seedPeople() {
+  return defaultPartnerNames.map((name, index) => personFromName(name, index + 1));
+}
+
+function normalizePeople(rawPeople, partnerRows = [], weeklyRows = []) {
+  const names = [
+    ...defaultPartnerNames,
+    ...partnerRows.map((record) => record.partnerName),
+    ...weeklyRows.map((goal) => goal.partnerName)
+  ].filter(Boolean);
+  const byName = new Map();
+
+  (rawPeople || []).filter((person) => !isExcludedPartnerName(person.name)).forEach((person, index) => {
+    const normalized = {
+      id: person.id || personIdFromName(person.name || `夥伴${index + 1}`),
+      name: person.name || "",
+      branch: person.branch || "大湳店",
+      title: person.title || "業務",
+      phone: person.phone || "",
+      email: person.email || "",
+      hireDate: person.hireDate || "",
+      exitDate: person.exitDate || "",
+      status: person.status === "inactive" ? "inactive" : "active",
+      sort: Number(person.sort || index + 1),
+      note: person.note || "",
+      createdAt: person.createdAt || new Date().toISOString(),
+      updatedAt: person.updatedAt || new Date().toISOString()
+    };
+    if (normalized.name) byName.set(normalized.name, normalized);
+  });
+
+  names.forEach((name) => {
+    if (!byName.has(name)) byName.set(name, personFromName(name, byName.size + 1));
+  });
+
+  return [...byName.values()].sort((a, b) => a.sort - b.sort || a.name.localeCompare(b.name, "zh-Hant"));
+}
+
+function isExcludedPartnerName(name) {
+  return EXCLUDED_PARTNER_NAMES.has(String(name || "").trim());
+}
+
+function hasExcludedPartnerData(raw) {
+  return (raw.people || []).some((person) => isExcludedPartnerName(person.name))
+    || (raw.partners || []).some((record) => isExcludedPartnerName(record.partnerName))
+    || (raw.weekly || []).some((record) => isExcludedPartnerName(record.partnerName));
+}
+
+function normalizePartnerRecord(record, people) {
+  const person = personByName(record.partnerName, people) || personById(record.personId, people);
+  return {
+    ...record,
+    year: Number(record.year) || new Date().getFullYear(),
+    month: Number(record.month) || 1,
+    personId: record.personId || person?.id || "",
+    partnerName: record.partnerName || person?.name || "",
+    annualRevenueTarget: Number(record.annualRevenueTarget) || 0,
+    actualRevenue: Number(record.actualRevenue) || 0,
+    actualListings: Number(record.actualListings) || 0,
+    actualOffers: Number(record.actualOffers) || 0,
+    actualClosings: Number(record.actualClosings) || 0
+  };
+}
+
+function normalizeWeeklyGoal(goal, people) {
+  const person = personByName(goal.partnerName, people) || personById(goal.personId, people);
+  return {
+    ...goal,
+    personId: goal.personId || person?.id || "",
+    partnerName: goal.partnerName || person?.name || ""
+  };
+}
+
+function personFromName(name, sort) {
+  const now = new Date().toISOString();
+  return {
+    id: personIdFromName(name),
+    name,
+    branch: "大湳店",
+    title: "業務",
+    phone: "",
+    email: "",
+    hireDate: "",
+    exitDate: "",
+    status: "active",
+    sort,
+    note: "",
+    createdAt: now,
+    updatedAt: now
+  };
+}
+
+function personIdFromName(name) {
+  let hash = 0;
+  String(name).split("").forEach((char) => {
+    hash = ((hash << 5) - hash) + char.charCodeAt(0);
+    hash |= 0;
+  });
+  return `emp-${Math.abs(hash)}`;
+}
+
+function personByName(name, people = state.people) {
+  return people.find((person) => person.name === name);
+}
+
+function personById(id, people = state.people) {
+  return people.find((person) => person.id === id);
+}
+
+function sortedPeople(includeInactive = true) {
+  return [...state.people]
+    .filter((person) => includeInactive || person.status === "active")
+    .sort((a, b) => a.sort - b.sort || a.name.localeCompare(b.name, "zh-Hant"));
+}
+
+function activePeople() {
+  return sortedPeople(false);
+}
+
+function activePartnerNames() {
+  return activePeople().map((person) => person.name);
+}
+
+function allPartnerNames() {
+  return sortedPeople(true).map((person) => person.name);
+}
+
+function peopleForReports(year = state.year) {
+  const names = new Set(activePartnerNames());
+  state.partners.filter((record) => record.year === year).forEach((record) => names.add(record.partnerName));
+  state.weekly.filter((goal) => goal.year === year).forEach((goal) => names.add(goal.partnerName));
+  return [...names].filter(Boolean).sort((a, b) => {
+    const aPerson = personByName(a);
+    const bPerson = personByName(b);
+    const aSort = aPerson?.sort ?? 9999;
+    const bSort = bPerson?.sort ?? 9999;
+    return aSort - bSort || a.localeCompare(b, "zh-Hant");
+  });
+}
+
+function personStatusLabel(name) {
+  const person = personByName(name);
+  if (!person) return "（歷史）";
+  return person.status === "inactive" ? "（離職／停用）" : "";
+}
+
+function seedCompany(year) {
+  return Array.from({ length: 12 }, (_, i) => ({
+    year,
+    month: i + 1,
+    targetRevenue: [320, 340, 360, 380, 420, 450, 470, 480, 500, 520, 540, 560][i],
+    closedRevenue: [260, 330, 310, 390, 360, 440, 0, 0, 0, 0, 0, 0][i],
+    agentCount: 22,
+    profit: [100, 160, 146, 212, 188, 254, 0, 0, 0, 0, 0, 0][i],
+    closedDeals: [3, 4, 3, 5, 4, 5, 0, 0, 0, 0, 0, 0][i]
+  }));
+}
+
+function seedLastYear(year) {
+  const lastYear = year - 1;
+  return defaultPartnerNames.flatMap((partner, partnerIndex) => {
+    return Array.from({ length: 12 }, (_, monthIndex) => ({
+      year: lastYear,
+      month: monthIndex + 1,
+      partnerName: partner,
+      annualRevenueTarget: 1200,
+      actualRevenue: monthIndex < 6 ? 55 + ((partnerIndex + monthIndex) % 6) * 8 : 0,
+      actualListings: 3 + ((partnerIndex + monthIndex) % 4),
+      actualOffers: 1 + ((partnerIndex + monthIndex) % 2),
+      actualClosings: (partnerIndex + monthIndex) % 5 === 0 ? 1 : 0
+    }));
+  });
+}
+
+function setupSelects() {
+  const currentYear = new Date().getFullYear();
+  const currentPartnerMonth = Number(els.partnerMonth.value);
+  const savedPartnerMonth = Number(localStorage.getItem(PARTNER_MONTH_STORAGE_KEY));
+  const preferredPartnerMonth = savedPartnerMonth >= 1 && savedPartnerMonth <= 12
+    ? savedPartnerMonth
+    : currentPartnerMonth >= 1 && currentPartnerMonth <= 12 ? currentPartnerMonth : 1;
+  const yearOptions = Array.from({ length: currentYear - 2020 + 2 }, (_, index) => 2020 + index)
+    .map((year) => `<option ${year === state.year ? "selected" : ""}>${year}</option>`).join("");
+  els.yearSelect.innerHTML = yearOptions;
+  if (els.mobileYearSelect) els.mobileYearSelect.innerHTML = yearOptions;
+  els.partnerMonth.innerHTML = monthLabels.map((label, i) => `<option value="${i + 1}">${label}</option>`).join("");
+  els.partnerMonth.value = String(preferredPartnerMonth);
+  if (els.companyMonthSelect) {
+    els.companyMonthSelect.innerHTML = monthLabels.map((label, i) => `<option value="${i + 1}">${label}</option>`).join("");
+    els.companyMonthSelect.value = String(new Date().getMonth() + 1);
+  }
+  setupPersonSelects();
+  els.weeklyType.innerHTML = goalTypes.map((type) => `<option>${type}</option>`).join("");
+  els.weeklyDate.value = isoDate(new Date());
+}
+
+function setupPersonSelects() {
+  const activeNames = activePartnerNames();
+  const reportNames = peopleForReports();
+  const partnerValue = els.partnerName.value;
+  const weeklyValue = els.weeklyPartner.value;
+  const filterValue = els.weeklyFilterPartner?.value;
+
+  els.partnerName.innerHTML = reportNames.length
+    ? reportNames.map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}${personStatusLabel(name)}</option>`).join("")
+    : `<option value="">請先新增在職夥伴</option>`;
+  els.weeklyPartner.innerHTML = activeNames.length
+    ? activeNames.map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join("")
+    : `<option value="">請先新增在職夥伴</option>`;
+
+  if (els.weeklyFilterPartner) {
+    els.weeklyFilterPartner.innerHTML = reportNames.map((name) => (
+      `<option value="${escapeHtml(name)}">${escapeHtml(name)}${personStatusLabel(name)}</option>`
+    )).join("");
+  }
+
+  if (reportNames.includes(partnerValue)) els.partnerName.value = partnerValue;
+  if (activeNames.includes(weeklyValue)) els.weeklyPartner.value = weeklyValue;
+  if (els.weeklyFilterPartner && reportNames.includes(filterValue)) els.weeklyFilterPartner.value = filterValue;
+}
+
+function bindEvents() {
+  document.querySelectorAll(".tab").forEach((tab) => {
+    tab.addEventListener("click", () => switchView(tab.dataset.view));
+  });
+
+  const changeYear = (value) => {
+    state.year = Number(value);
+    els.yearSelect.value = String(state.year);
+    if (els.mobileYearSelect) els.mobileYearSelect.value = String(state.year);
+    state.company = ensureCompanyYear(state.year);
+    ensureAnnualTarget(state.year);
+    saveState();
+    render();
+  };
+  els.yearSelect.addEventListener("change", () => changeYear(els.yearSelect.value));
+  if (els.mobileYearSelect) {
+    els.mobileYearSelect.addEventListener("change", () => changeYear(els.mobileYearSelect.value));
+  }
+
+  els.annualTargetInput.addEventListener("change", () => {
+    state.annualTargets[state.year] = num(els.annualTargetInput.value);
+    saveState();
+    renderOverview();
+  });
+
+  if (els.aiOverviewBtn) els.aiOverviewBtn.addEventListener("click", handleAiOverviewDiagnosis);
+  if (els.aiCompanyBtn) els.aiCompanyBtn.addEventListener("click", handleAiOverviewDiagnosis);
+  if (els.aiLineBroadcastBtn) els.aiLineBroadcastBtn.addEventListener("click", handleAiLineBroadcast);
+  if (els.aiModalClose) els.aiModalClose.addEventListener("click", () => els.aiModal.close());
+
+  els.partnerMonth.addEventListener("change", () => {
+    partnerFormDirty = false;
+    localStorage.setItem(PARTNER_MONTH_STORAGE_KEY, els.partnerMonth.value);
+    fillPartnerForm();
+    renderPartners();
+  });
+  if (els.companyMonthSelect) els.companyMonthSelect.addEventListener("change", renderCompanyTable);
+  if (els.companyImportFile) {
+    els.companyImportFile.addEventListener("change", () => {
+      const file = els.companyImportFile.files[0];
+      if (els.companyImportStatus) {
+        els.companyImportStatus.textContent = file ? `已選擇：${file.name}，請按「讀取資料」` : "尚未匯入";
+      }
+    });
+  }
+  if (els.companyImportBtn) els.companyImportBtn.addEventListener("click", importCompanyExcel);
+  els.partnerName.addEventListener("change", () => {
+    partnerFormDirty = false;
+    fillPartnerForm();
+    renderPartners();
+  });
+  [els.annualRevenueTarget, els.actualRevenue, els.actualListings, els.actualOffers, els.actualClosings].forEach((input) => {
+    input?.addEventListener("input", () => {
+      partnerFormDirty = true;
+      if (els.partnerImportStatus) els.partnerImportStatus.textContent = "資料輸入中，雲端讀取已暫停；請按儲存";
+    });
+  });
+  if (els.openPartnerFormBtn) els.openPartnerFormBtn.addEventListener("click", openPartnerFormDrawer);
+  if (els.closePartnerFormBtn) els.closePartnerFormBtn.addEventListener("click", closePartnerFormDrawer);
+  if (els.partnerFormBackdrop) els.partnerFormBackdrop.addEventListener("click", closePartnerFormDrawer);
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && els.partnerForm?.classList.contains("drawer-open")) closePartnerFormDrawer();
+  });
+  els.partnerForm.addEventListener("submit", savePartnerRecord);
+  els.partnerImportFile.addEventListener("change", importPartnerExcel);
+  els.weeklyForm.addEventListener("submit", saveWeeklyGoal);
+  els.weeklyImportFile.addEventListener("change", importWeeklyExcel);
+  els.exportOverviewBtn.addEventListener("click", exportOverviewReport);
+  els.exportCompanyBtn.addEventListener("click", exportCompanyReport);
+  els.exportPartnersBtn.addEventListener("click", exportPartnersReport);
+  els.exportWeeklyBtn.addEventListener("click", exportWeeklyReport);
+  if (els.weeklyFilterPartner) els.weeklyFilterPartner.addEventListener("change", renderWeekly);
+  if (els.newPersonBtn) els.newPersonBtn.addEventListener("click", () => openPersonDialog());
+  if (els.savePersonBtn) els.savePersonBtn.addEventListener("click", savePerson);
+  if (els.personForm) {
+    els.personForm.addEventListener("submit", (event) => {
+      if (event.submitter?.value === "cancel") return;
+      event.preventDefault();
+      savePerson();
+    });
+  }
+  if (els.peopleTable) {
+    els.peopleTable.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-person-action]");
+      if (!button) return;
+      const person = personById(button.dataset.personId);
+      if (button.dataset.personAction === "edit") openPersonDialog(person);
+      if (button.dataset.personAction === "toggle") togglePersonStatus(button.dataset.personId);
+    });
+  }
+  if (els.peopleStatusFilter) els.peopleStatusFilter.addEventListener("change", renderPeople);
+  if (els.peopleSearch) els.peopleSearch.addEventListener("input", renderPeople);
+  [els.overviewDetailClose, els.overviewDetailCloseBottom].forEach((button) => {
+    if (button) button.addEventListener("click", () => els.overviewDetailDialog.close());
+  });
+  window.addEventListener("resize", () => {
+    renderCompanyTable();
+    renderOverviewPartnerTable();
+    renderPartners();
+    renderWeekly();
+  });
+}
+
+/**
+ * AI Store Operations Overview Diagnosis Feature
+ */
+function handleAiOverviewDiagnosis() {
+  const rows = companyRows();
+  const annualTarget = num(state.annualTargets[state.year]);
+  
+  const totalActual = rows.reduce((sum, r) => sum + monthlyPartnerRevenue(r.month), 0);
+  const totalTarget = annualTarget;
+  const totalProfit = rows.reduce((sum, r) => sum + calcProfit(r), 0);
+  const totalClosings = rows.reduce((sum, r) => sum + monthlyPartnerClosings(r.month), 0);
+  const activeAgentCount = activePeople().length;
+
+  const monthlySummary = rows.map(r => 
+    `${r.month}月: 預測${r.targetRevenue}萬 | 實際${monthlyPartnerRevenue(r.month)}萬 | 盈餘${calcProfit(r)}萬 | 成交${monthlyPartnerClosings(r.month)}件`
+  ).join("\n");
+
+  const systemInstruction = `你是一位資深的房地產加盟店營運顧問，專門協助太平洋房屋友成大湳店進行店務營運數據分析與策略指導。請使用專業、溫暖且具行動導向的繁體中文，針對提供的業績與營運數據，進行精準分析。`;
+  
+  const prompt = `
+請分析「太平洋房屋 友成大湳店」${state.year}年度的總體營運數據：
+- 年度總目標：${totalTarget} 萬元
+- 目前累積實際業績：${totalActual} 萬元 (目標達成率：${Math.round((totalActual/totalTarget)*100)}%)
+- 年度總盈餘：${totalProfit} 萬元
+- 總成交件數：${totalClosings} 件
+- 在職業務人數：${activeAgentCount} 人 (平均人效：${activeAgentCount ? Math.round(totalActual / activeAgentCount) : 0} 萬元/人)
+
+各月明細數據：
+${monthlySummary}
+
+請提供包含以下三大重點的分析報告 (請適度使用加粗與清單點項)：
+1. **整體營運強弱勢分析 (SWOT / 亮點與瓶頸)**
+2. **人效與成交轉換率提升建議**
+3. **下階段重點突破行動策略 (具體 3-4 個可執行的店務方針)**
+`;
+
+  showAiModal(`✨ ${state.year} 年度營運全景 AI 診斷報告`, callGeminiAPI(prompt, systemInstruction));
+}
+
+/**
+ * AI Individual Partner Performance Coaching Feature
+ */
+function handleAiPartnerCoaching(partnerName) {
+  const month = Number(els.partnerMonth.value);
+  const record = findPartnerRecord(partnerName, month) || defaultPartnerRecord(partnerName, month);
+  const annualTarget = num(record.annualRevenueTarget) || latestAnnualTarget(partnerName);
+  const ytdRevenue = partnerYtdRevenue(partnerName, month, state.year);
+  const lastAnnualRevenue = partnerAnnualRevenue(partnerName, state.year - 1);
+  const achievement = rate(ytdRevenue, annualTarget);
+  
+  const systemInstruction = `你是一位實戰經驗豐富的房產仲介店長兼業績教練，對太平洋房屋大湳店夥伴進行個人績效與業務開發輔導。口吻應兼具鼓勵性、建設性與實用戰術指導。`;
+
+  const prompt = `
+請為夥伴「${partnerName}」提供單月及年度個人業務教練指導報告：
+- 評估年度：${state.year} 年 ${month} 月
+- 個人年度目標：${annualTarget} 萬元
+- 目前年度累積業績：${ytdRevenue} 萬元 (達成率：${achievement}%)
+- 去年總業績：${lastAnnualRevenue} 萬元
+- 本月業績：${record.actualRevenue} 萬元
+- 本月行動：進案 ${record.actualListings} 件、收斡 ${record.actualOffers} 件、成交 ${record.actualClosings} 件
+
+請提供包含以下重點的教練指導 (使用繁體中文，善用列點與簡潔段落)：
+1. **現階段業績優勢與突破點評估**
+2. **進案/收斡/成交轉換率建議**
+3. **下階段最關鍵的 3 個週行動焦點 (Action Items)**
+`;
+
+  showAiModal(`✨ 夥伴【${partnerName}】AI 個人績效教練報告`, callGeminiAPI(prompt, systemInstruction));
+}
+
+/**
+ * AI Offer Negotiation & Closing Pitch Generator Feature
+ */
+function handleAiOfferStrategy(offerId) {
+  const record = state.offers.find(o => o.id === offerId);
+  if (!record) return;
+
+  const systemInstruction = `你是一位極具談判智慧與撮合經驗的房地產開發/銷售總教練。你的目標是協助經紀人完成談判突破與順利促成交易。`;
+
+  const prompt = `
+請為以下這筆收斡旋案件提供「議價溝通話術」與「成交突破策略」：
+- 案名：${record.caseName}
+- 開發經紀人：${record.developer} ｜ 銷售經紀人：${record.salesperson}
+- 買方承購出價：${record.offerPrice} 萬元
+- 斡旋金：${record.deposit} 萬元
+- 屋主底價：${record.bottomPrice ? record.bottomPrice + " 萬元" : "未公開/未知"}
+- 服務費：${record.serviceFee} ${record.serviceFeeUnit}
+- 是否有特別但書：${record.hasClause === '是' ? record.clauseNote : '無'}
+- 出價是否達開價八成：${record.reachesEightyPercent}
+
+請提供包含以下三大話術與策略的完整教戰手冊 (繁體中文)：
+1. **對屋主談判溝通話術 (爭取降價/促成簽字同意)**
+2. **對買方追價溝通話術 (引導追價與鎖定意願)**
+3. **本案成交核心突破點與常見陷阱提醒 (針對但書與差價策略)**
+`;
+
+  showAiModal(`✨ 【${record.caseName}】AI 議價話術與成交策略`, callGeminiAPI(prompt, systemInstruction));
+}
+
+/**
+ * AI LINE Broadcast Summary Feature
+ */
+function handleAiLineBroadcast() {
+  const activeOffers = state.offers.filter(o => o.offerStatus === 'active' || (!o.closedAt && !o.withdrawnAt));
+  const urgentOffers = activeOffers.filter(o => {
+    const days = Math.round((new Date(o.endDate + "T00:00:00").getTime() - new Date().setHours(0,0,0,0)) / 86400000);
+    return days <= 3 && days >= 0;
+  });
+  const recentDeals = state.offers.filter(o => o.offerStatus === 'closed' || Boolean(o.closedAt)).slice(0, 3);
+
+  const offersSummary = activeOffers.map(o => 
+    `・[${o.caseName}] 出價:${o.offerPrice}萬/斡旋:${o.deposit}萬 (開發:${o.developer}/銷售:${o.salesperson}) - 到期日:${o.endDate}`
+  ).join("\n");
+
+  const systemInstruction = `你是一位熱情、專業且有效率的房地產秘書與行政總管。請產生適合發送至店務 LINE 工作群組的日報文案，充滿活力且易於閱讀。`;
+
+  const prompt = `
+請整理並生成發送到「太平洋房屋友成大湳店」LINE工作群組的【今日斡旋與店務重點日報】：
+- 目前有效斡旋總筆數：${activeOffers.length} 筆
+- 3天內即將到期重點案件：${urgentOffers.length} 筆
+- 近期賀成交案件：${recentDeals.map(d=>d.caseName).join('、') || '持續衝刺中'}
+
+有效斡旋清單：
+${offersSummary || '今日暫無有效斡旋'}
+
+格式要求：
+1. 請包含合適的 Emoji 符號 (如 📢, 🔥, 🏆, ⏰)。
+2. 版面整齊，排版清晰，方便手機閱讀與一鍵複製。
+3. 包含對全店夥伴激勵的一句話。
+`;
+
+  showAiModal(`✨ LINE 店務斡旋通報播報稿`, callGeminiAPI(prompt, systemInstruction));
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  scheduleCloudSave();
+}
+
+async function loadCloudState() {
+  if (cloudLoadInProgress || cloudSaveInProgress || Date.now() < cloudWriteHoldUntil || partnerFormDirty || els.partnerForm?.contains(document.activeElement)) return;
+  cloudLoadInProgress = true;
+  setSyncStatus("正在讀取 Google Sheet 資料...");
+
+  try {
+    const response = await fetch(`${CLOUD_API_URL}?action=listAll&ts=${Date.now()}`);
+    const payload = await response.json();
+
+    if (!payload.ok) throw new Error(payload.error || "Cloud load failed");
+    if (partnerFormDirty || els.partnerForm?.contains(document.activeElement)) {
+      if (els.partnerImportStatus) els.partnerImportStatus.textContent = "尚未儲存的輸入已保留，暫不套用雲端資料";
+      return;
+    }
+
+    if (payload.state && !isCloudStateEmpty(payload.state)) {
+      const needsPartnerCleanup = hasExcludedPartnerData(payload.state);
+      const localOffers = Array.isArray(state.offers) ? state.offers : [];
+      const cloudAlreadySupportsOffers = Array.isArray(payload.state.offers);
+      const shouldMigrateLocalOffers = localOffers.length > 0
+        && (!cloudAlreadySupportsOffers || payload.state.offers.length === 0)
+        && localStorage.getItem("danan-offers-cloud-migrated-v1") !== "1";
+      state = normalizeState({ ...payload.state, year: state.year });
+      if (shouldMigrateLocalOffers) state.offers = localOffers;
+      state.company = ensureCompanyYear(state.year);
+      ensureAnnualTarget(state.year);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      setupSelects();
+      render();
+      cloudInitialLoadComplete = true;
+      window.dispatchEvent(new CustomEvent("offers-cloud-loaded"));
+      if (shouldMigrateLocalOffers) {
+        localStorage.setItem("danan-offers-cloud-migrated-v1", "1");
+        saveState();
+      } else if (cloudAlreadySupportsOffers) {
+        localStorage.setItem("danan-offers-cloud-migrated-v1", "1");
+      }
+      if (needsPartnerCleanup) saveState();
+      setSyncStatus("已讀取 Google Sheet 資料");
+      return;
+    }
+
+    cloudInitialLoadComplete = true;
+    saveState();
+    setSyncStatus("Google Sheet 已建立，已同步目前資料");
+  } catch (error) {
+    console.warn(error);
+    cloudInitialLoadComplete = true;
+    if (cloudSavePending) scheduleCloudSave();
+    setSyncStatus("雲端讀取失敗，先使用本機資料");
+  } finally {
+    cloudLoadInProgress = false;
+  }
+}
+
+function scheduleCloudSave() {
+  if (!cloudInitialLoadComplete) {
+    cloudSavePending = true;
+    return;
+  }
+  cloudSavePending = false;
+  window.clearTimeout(cloudSyncTimer);
+  cloudSyncTimer = window.setTimeout(saveCloudState, 700);
+}
+
+async function saveCloudState() {
+  if (cloudSaveInProgress) {
+    cloudSavePending = true;
+    return;
+  }
+  cloudSaveInProgress = true;
+  setSyncStatus("正在同步 Google Sheet...");
+
+  try {
+    await fetch(CLOUD_API_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: "saveAll", state })
+    });
+    cloudWriteHoldUntil = Date.now() + 5000;
+    setSyncStatus("已同步 Google Sheet");
+  } catch (error) {
+    console.warn(error);
+    setSyncStatus("雲端同步失敗，資料已先存在本機");
+  } finally {
+    cloudSaveInProgress = false;
+    if (cloudSavePending) scheduleCloudSave();
+  }
+}
+
+function isCloudStateEmpty(cloudState) {
+  return !Object.keys(cloudState.annualTargets || {}).length
+    && !(cloudState.company || []).length
+    && !(cloudState.people || []).length
+    && !(cloudState.partners || []).length
+    && !(cloudState.weekly || []).length
+    && !(cloudState.offers || []).length;
+}
+
+function setSyncStatus(message) {
+  [els.companyImportStatus, els.partnerImportStatus, els.importStatus].forEach((target) => {
+    if (target) target.textContent = message;
+  });
+  const offerStatus = document.querySelector("#offerImportStatus");
+  if (offerStatus) offerStatus.textContent = message;
+}
+
+function ensureCompanyYear(year) {
+  const rows = state.company.filter((row) => row.year === year);
+  return rows.length === 12 ? state.company : [...state.company, ...seedCompany(year)];
+}
+
+function ensureAnnualTarget(year) {
+  if (!state.annualTargets[year]) state.annualTargets[year] = 6000;
+}
+
+function render() {
+  setupPersonSelects();
+  renderOverview();
+  renderCompanyTable();
+  fillPartnerForm();
+  renderPartners();
+  renderWeekly();
+  renderPeople();
+}
+
+function switchView(viewId) {
+  document.querySelectorAll(".tab").forEach((tab) => tab.classList.toggle("active", tab.dataset.view === viewId));
+  document.querySelectorAll(".view").forEach((view) => view.classList.toggle("active", view.id === viewId));
+}
+
+function isCompactView() {
+  return window.matchMedia("(max-width: 1024px)").matches;
+}
+
+function isPhoneView() {
+  return window.matchMedia("(max-width: 640px)").matches;
+}
+
+function companyRows() {
+  return state.company.filter((row) => row.year === state.year).sort((a, b) => a.month - b.month);
+}
+
+function monthlyPartnerRows(month) {
+  return state.partners.filter((record) => record.year === state.year && record.month === month);
+}
+
+function monthlyPartnerRevenue(month) {
+  return monthlyPartnerRows(month).reduce((sum, record) => sum + num(record.actualRevenue), 0);
+}
+
+function monthlyPartnerRevenueForYear(year, month) {
+  return state.partners
+    .filter((record) => record.year === year && record.month === month)
+    .reduce((sum, record) => sum + num(record.actualRevenue), 0);
+}
+
+function monthlyPartnerClosings(month) {
+  return monthlyPartnerRows(month).reduce((sum, record) => sum + num(record.actualClosings), 0);
+}
+
+function hasPartnerActivity(record) {
+  return num(record.actualRevenue) || num(record.actualListings) || num(record.actualOffers) || num(record.actualClosings);
+}
+
+function monthlyAgentCount(month) {
+  return activePeople().length;
+}
+
+function renderOverview() {
+  const rows = companyRows();
+  const annualTarget = num(state.annualTargets[state.year]);
+  els.annualTargetInput.value = money(annualTarget);
+  els.annualTargetDisplay.textContent = `${money(annualTarget)}萬`;
+
+  const totals = rows.reduce((sum, row) => {
+    const actualRevenue = monthlyPartnerRevenue(row.month);
+    const profit = calcProfit(row);
+    const activeAgentCount = monthlyAgentCount(row.month);
+    sum.target += row.targetRevenue;
+    sum.annualTarget += annualTarget / 12;
+    sum.revenue += actualRevenue;
+    sum.closedRevenue += row.closedRevenue;
+    sum.profit += profit;
+    sum.closed += monthlyPartnerClosings(row.month);
+    sum.agentMonths += activeAgentCount;
+    return sum;
+  }, { target: 0, annualTarget: 0, revenue: 0, closedRevenue: 0, profit: 0, closed: 0, agentMonths: 0 });
+
+  const avgEfficiency = totals.agentMonths ? Math.round(totals.revenue / totals.agentMonths) : 0;
+  const achievement = annualTarget ? Math.round((totals.revenue / annualTarget) * 100) : 0;
+  const gap = totals.revenue - annualTarget;
+
+  els.overviewKpis.innerHTML = [
+    kpi("年度累積業績", `${money(totals.revenue)}萬`, `年度達成 ${achievement}%`),
+    kpi("年度關帳業績", `${money(totals.closedRevenue)}萬`, "依月營運關帳業績累計"),
+    kpi("年度總盈餘", `${money(totals.profit)}萬`, profitStatus(totals.profit)),
+    kpi("目標差距", `${signedMoney(gap)}萬`, gap >= 0 ? "已超過年度目標" : "尚未達年度目標")
+  ].join("");
+
+  drawLineChart(els.revenueChart, rows, "actualRevenue", "targetRevenue");
+  drawProfitChart(els.profitChart, rows);
+  drawGapChart(els.gapChart, rows);
+  renderOverviewPartnerTable();
+}
+
+function kpi(label, value, context) {
+  return `<article class="kpi"><span>${label}</span><strong>${value}</strong><small>${context}</small></article>`;
+}
+
+function renderCompanyTable() {
+  const rows = isCompactView() && els.companyMonthSelect
+    ? companyRows().filter((row) => row.month === Number(els.companyMonthSelect.value))
+    : companyRows();
+  els.companyTable.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>月份</th><th>預測業績</th><th>實際業績</th><th>關帳業績</th><th>人數</th><th>盈餘</th><th>人效</th><th>和去年同期差距%</th><th>成交</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map(companyRowHtml).join("")}
+        ${isPhoneView() ? "" : companyTotalRowHtml(rows)}
+      </tbody>
+    </table>
+  `;
+
+  els.companyTable.querySelectorAll("input").forEach((input) => {
+    input.addEventListener("change", () => {
+      const row = state.company.find((item) => item.year === state.year && item.month === Number(input.dataset.month));
+      row[input.dataset.field] = num(input.value);
+      saveState();
+      render();
+    });
+  });
+}
+
+function renderOverviewPartnerTable() {
+  const rows = annualPartnerRows();
+  if (isCompactView()) {
+    const selected = rows.some((row) => row.partnerName === window.selectedOverviewPartner)
+      ? window.selectedOverviewPartner
+      : rows[0]?.partnerName || activePartnerNames()[0];
+    window.selectedOverviewPartner = selected;
+    els.overviewPartnerDetail.innerHTML = "";
+
+    els.overviewPartnerTable.innerHTML = `
+      <table class="rank-table">
+        <thead>
+          <tr>
+            <th>排名</th><th>夥伴</th><th>年度總業績</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map((row, index) => `
+            <tr class="${row.partnerName === selected ? "selected-row" : ""}">
+              <td data-label="排名">${row.isAggregate ? "合計" : index + 1}</td>
+            <td data-label="夥伴"><button class="link-button" type="button" data-overview-index="${index}">${annualRowName(row)}</button></td>
+              <td data-label="年度總業績"><strong>${money(row.total)}萬</strong></td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    `;
+
+    els.overviewPartnerTable.querySelectorAll("[data-overview-index]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const row = rows[Number(button.dataset.overviewIndex)];
+        window.selectedOverviewPartner = row?.partnerName || selected;
+        renderOverviewPartnerTable();
+        openOverviewDetailDialog(row);
+      });
+    });
+    return;
+  }
+
+  if (els.overviewPartnerDetail) els.overviewPartnerDetail.innerHTML = "";
+  els.overviewPartnerTable.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>排名</th><th>夥伴</th>
+          ${monthLabels.map((label) => `<th>${label}</th>`).join("")}
+          <th>年度總業績</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map((row, index) => `
+          <tr>
+            <td data-label="排名">${row.isAggregate ? "合計" : index + 1}</td>
+            <td data-label="夥伴">${annualRowName(row)}</td>
+            ${row.months.map((value, monthIndex) => `<td data-label="${monthIndex + 1}月">${money(value)}萬</td>`).join("")}
+            <td data-label="年度總業績"><strong>${money(row.total)}萬</strong></td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
+}
+
+function annualPartnerRows() {
+  const activeRows = activePartnerNames().map((partnerName) => annualPartnerRow(partnerName, false))
+    .sort((a, b) => b.total - a.total || a.partnerName.localeCompare(b.partnerName, "zh-Hant"));
+
+  const activeNameSet = new Set(activePartnerNames());
+  const inactiveNames = [...new Set(state.partners
+    .filter((record) => record.year === state.year && record.partnerName && !activeNameSet.has(record.partnerName))
+    .map((record) => record.partnerName))];
+
+  const inactiveMonths = Array.from({ length: 12 }, (_, index) => inactiveNames.reduce((sum, name) => {
+    const record = findPartnerRecord(name, index + 1, state.year);
+    return sum + num(record?.actualRevenue);
+  }, 0));
+  const inactiveTotal = inactiveMonths.reduce((sum, value) => sum + value, 0);
+
+  if (inactiveTotal > 0) {
+    activeRows.push({
+      partnerName: "離職夥伴合計",
+      months: inactiveMonths,
+      total: inactiveTotal,
+      isAggregate: true
+    });
+  }
+
+  return activeRows;
+}
+
+function openOverviewDetailDialog(row) {
+  if (!row || !els.overviewDetailDialog) return;
+
+  els.overviewDetailTitle.textContent = `${stripHtml(annualRowName(row))} 年度業績表`;
+  els.overviewDetailBody.innerHTML = `
+    <table class="overview-detail-table">
+      <thead>
+        <tr>
+          <th>月份</th><th>業績</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${row.months.map((value, index) => `
+          <tr>
+            <td data-label="月份">${index + 1}月</td>
+            <td data-label="業績"><strong>${money(value)}萬</strong></td>
+          </tr>
+        `).join("")}
+        <tr class="total-row">
+          <td data-label="月份"><strong>年度總計</strong></td>
+          <td data-label="業績"><strong>${money(row.total)}萬</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  `;
+  els.overviewDetailDialog.showModal();
+}
+
+function annualPartnerRow(partnerName, isAggregate) {
+  const months = Array.from({ length: 12 }, (_, index) => {
+    const record = findPartnerRecord(partnerName, index + 1, state.year);
+    return num(record?.actualRevenue);
+  });
+  const total = months.reduce((sum, value) => sum + value, 0);
+  return { partnerName, months, total, isAggregate };
+}
+
+function annualRowName(row) {
+  return row.isAggregate ? "離職夥伴合計" : `${escapeHtml(row.partnerName)}${personStatusLabel(row.partnerName)}`;
+}
+
+function companyRowHtml(row) {
+  const actualRevenue = monthlyPartnerRevenue(row.month);
+  const profit = calcProfit(row);
+  const agentCount = monthlyAgentCount(row.month);
+  const efficiency = agentCount ? Math.round(actualRevenue / agentCount) : 0;
+  const yoyRate = sameMonthYoYRate(row.month);
+  const closings = monthlyPartnerClosings(row.month);
+  return `
+    <tr>
+      <td data-label="月份">${row.month}月</td>
+      ${inputCell(row, "targetRevenue", "預測業績")}
+      <td data-label="實際業績"><strong>${money(actualRevenue)}萬</strong></td>
+      ${inputCell(row, "closedRevenue", "關帳業績")}
+      <td data-label="人數"><strong>${agentCount}</strong></td>
+      ${inputCell(row, "profit", "盈餘")}
+      <td data-label="人效">${money(efficiency)}萬</td>
+      <td data-label="和去年同期差距%" class="${percentStatusClass(yoyRate)}">${signedPercent(yoyRate)}</td>
+      <td data-label="成交"><strong>${closings}件</strong></td>
+    </tr>
+  `;
+}
+
+function companyTotalRowHtml(rows) {
+  const total = rows.reduce((sum, row) => {
+    const actualRevenue = monthlyPartnerRevenue(row.month);
+    const lastYearRevenue = monthlyPartnerRevenueForYear(state.year - 1, row.month);
+    const agentCount = monthlyAgentCount(row.month);
+    sum.targetRevenue += num(row.targetRevenue);
+    sum.actualRevenue += actualRevenue;
+    sum.lastYearRevenue += lastYearRevenue;
+    sum.closedRevenue += num(row.closedRevenue);
+    sum.agentCount += agentCount;
+    sum.profit += calcProfit(row);
+    sum.closings += monthlyPartnerClosings(row.month);
+    return sum;
+  }, {
+    targetRevenue: 0,
+    actualRevenue: 0,
+    lastYearRevenue: 0,
+    closedRevenue: 0,
+    agentCount: 0,
+    profit: 0,
+    closings: 0
+  });
+  const efficiency = total.agentCount ? total.actualRevenue / total.agentCount : 0;
+  const yoyRate = percentChange(total.actualRevenue, total.lastYearRevenue);
+
+  return `
+    <tr class="total-row">
+      <td data-label="月份"><strong>合計</strong></td>
+      <td data-label="預測業績"><strong>${money(total.targetRevenue)}萬</strong></td>
+      <td data-label="實際業績"><strong>${money(total.actualRevenue)}萬</strong></td>
+      <td data-label="關帳業績"><strong>${money(total.closedRevenue)}萬</strong></td>
+      <td data-label="人數"><strong>-</strong></td>
+      <td data-label="盈餘"><strong>${money(total.profit)}萬</strong></td>
+      <td data-label="人效"><strong>${money(efficiency)}萬</strong></td>
+      <td data-label="和去年同期差距%" class="${percentStatusClass(yoyRate)}"><strong>${signedPercent(yoyRate)}</strong></td>
+      <td data-label="成交"><strong>${total.closings}件</strong></td>
+    </tr>
+  `;
+}
+
+function inputCell(row, field, label) {
+  const amountFields = ["targetRevenue", "closedRevenue", "profit"];
+  const step = amountFields.includes(field) ? "0.01" : "1";
+  const value = amountFields.includes(field) ? money(row[field] || 0) : row[field] || 0;
+  return `<td data-label="${label}"><input type="number" min="0" step="${step}" data-month="${row.month}" data-field="${field}" value="${value}"></td>`;
+}
+
+function fillPartnerForm() {
+  if (!els.partnerName.value) return;
+  const record = findPartnerRecord();
+  els.annualRevenueTarget.value = money(record?.annualRevenueTarget || latestAnnualTarget(els.partnerName.value));
+  els.actualRevenue.value = money(record?.actualRevenue || 0);
+  els.actualListings.value = record?.actualListings || 0;
+  els.actualOffers.value = record?.actualOffers || 0;
+  els.actualClosings.value = record?.actualClosings || 0;
+  updatePartnerFormContext();
+}
+
+function updatePartnerFormContext() {
+  if (!els.partnerFormContext) return;
+  const monthText = els.partnerMonth.options[els.partnerMonth.selectedIndex]?.text || "";
+  const partnerText = els.partnerName.options[els.partnerName.selectedIndex]?.text || "";
+  els.partnerFormContext.textContent = [monthText, partnerText].filter(Boolean).join("｜");
+}
+
+function openPartnerFormDrawer() {
+  if (!isCompactView()) return;
+  fillPartnerForm();
+  els.partnerForm.classList.add("drawer-open");
+  els.partnerFormBackdrop?.classList.add("visible");
+  els.openPartnerFormBtn?.setAttribute("aria-expanded", "true");
+  document.body.classList.add("drawer-active");
+  window.setTimeout(() => els.annualRevenueTarget?.focus(), 180);
+}
+
+function closePartnerFormDrawer() {
+  els.partnerForm?.classList.remove("drawer-open");
+  els.partnerFormBackdrop?.classList.remove("visible");
+  els.openPartnerFormBtn?.setAttribute("aria-expanded", "false");
+  document.body.classList.remove("drawer-active");
+}
+
+function findPartnerRecord(name = els.partnerName.value, month = Number(els.partnerMonth.value), year = state.year) {
+  return state.partners.find((record) => record.year === year && record.month === month && record.partnerName === name);
+}
+
+function latestAnnualTarget(name) {
+  const record = [...state.partners].reverse().find((item) => item.year === state.year && item.partnerName === name && item.annualRevenueTarget);
+  return record?.annualRevenueTarget || 1200;
+}
+
+function applyAnnualTargetFromMonth(partnerName, startMonth, target) {
+  const person = personByName(partnerName);
+  for (let month = startMonth; month <= 12; month += 1) {
+    let record = findPartnerRecord(partnerName, month, state.year);
+    if (!record) {
+      record = {
+        year: state.year,
+        month,
+        partnerName,
+        personId: person?.id || "",
+        actualRevenue: 0,
+        actualListings: 0,
+        actualOffers: 0,
+        actualClosings: 0
+      };
+      state.partners.push(record);
+    }
+    record.annualRevenueTarget = target;
+  }
+}
+
+function savePartnerRecord(event) {
+  event.preventDefault();
+  const month = Number(els.partnerMonth.value);
+  const partnerName = els.partnerName.value;
+  if (!partnerName || !personByName(partnerName) || personByName(partnerName).status !== "active") {
+    showToast("請先在人事管理新增或恢復一位在職夥伴。", "warning");
+    return;
+  }
+  let record = findPartnerRecord(partnerName, month);
+  if (!record) {
+    record = { year: state.year, month, partnerName, personId: personByName(partnerName)?.id || "" };
+    state.partners.push(record);
+  }
+
+  const annualTarget = num(els.annualRevenueTarget.value);
+  Object.assign(record, {
+    annualRevenueTarget: annualTarget,
+    actualRevenue: num(els.actualRevenue.value),
+    actualListings: num(els.actualListings.value),
+    actualOffers: num(els.actualOffers.value),
+    actualClosings: num(els.actualClosings.value)
+  });
+  applyAnnualTargetFromMonth(partnerName, month, annualTarget);
+
+  partnerFormDirty = false;
+  cloudWriteHoldUntil = Date.now() + 8000;
+  saveState();
+  render();
+  closePartnerFormDrawer();
+  showToast("夥伴績效已儲存");
+}
+
+function importPartnerExcel(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    const text = String(reader.result || "");
+    const imported = parsePartnerExcel(text);
+    upsertPartnerRecords(imported);
+    saveState();
+    render();
+    els.partnerImportStatus.textContent = `已匯入 ${imported.length} 筆夥伴績效`;
+    showToast(`已匯入 ${imported.length} 筆夥伴績效`);
+    els.partnerImportFile.value = "";
+  };
+  reader.readAsText(file, "utf-8");
+}
+
+function parsePartnerExcel(text) {
+  const rows = parseTabularText(text);
+  if (rows.length < 2) return [];
+
+  const headerIndex = rows.findIndex((row) => row.some((cell) => /夥伴|姓名|業務/.test(cell)));
+  if (headerIndex < 0) return [];
+
+  const headers = rows[headerIndex].map(normalizeHeader);
+  return rows.slice(headerIndex + 1)
+    .map((row) => partnerRecordFromRow(headers, row))
+    .filter((record) => record.partnerName && !isExcludedPartnerName(record.partnerName));
+}
+
+function parseTabularText(text) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(text, "text/html");
+  const htmlRows = [...doc.querySelectorAll("tr")].map((tr) => [...tr.children].map((cell) => cell.textContent.trim()));
+  if (htmlRows.length) return htmlRows;
+
+  return text.split(/\r?\n/)
+    .map((line) => line.split(line.includes("\t") ? "\t" : ",").map((cell) => cell.trim()))
+    .filter((row) => row.some(Boolean));
+}
+
+function importCompanyExcel() {
+  const file = els.companyImportFile?.files?.[0];
+  if (!file) {
+    if (els.companyImportStatus) els.companyImportStatus.textContent = "請先選擇月營運 Excel 檔";
+    showToast("請先選擇月營運 Excel 檔", "warning");
+    return;
+  }
+
+  if (els.companyImportStatus) els.companyImportStatus.textContent = "正在讀取月營運資料...";
+
+  const isWorkbookFile = /\.(xlsx|xls)$/i.test(file.name);
+  const useWorkbookParser = isWorkbookFile && window.XLSX;
+  if (isWorkbookFile && !window.XLSX) {
+    if (els.companyImportStatus) els.companyImportStatus.textContent = "Excel 解析套件尚未載入，請確認網路後重新整理";
+    showToast("Excel 解析套件尚未載入", "warning");
+    els.companyImportFile.value = "";
+    return;
+  }
+  const reader = new FileReader();
+
+  reader.onload = () => {
+    try {
+      const rows = useWorkbookParser
+        ? rowsFromWorkbook(reader.result)
+        : parseTabularText(String(reader.result || ""));
+      const imported = parseCompanyExcel(rows);
+      if (!imported.length) throw new Error("No company rows imported");
+      upsertCompanyRecords(imported);
+      state.company = ensureCompanyYear(state.year);
+      saveState();
+      render();
+      if (els.companyImportStatus) els.companyImportStatus.textContent = `已匯入 ${imported.length} 筆月營運資料`;
+      showToast(`已匯入 ${imported.length} 筆月營運資料`);
+    } catch (error) {
+      console.warn(error);
+      if (els.companyImportStatus) els.companyImportStatus.textContent = "匯入失敗，請確認檔案欄位格式";
+      showToast("匯入失敗，請確認檔案欄位格式", "warning");
+    } finally {
+      els.companyImportFile.value = "";
+    }
+  };
+
+  if (useWorkbookParser) {
+    reader.readAsArrayBuffer(file);
+  } else {
+    reader.readAsText(file, "utf-8");
+  }
+}
+
+function rowsFromWorkbook(arrayBuffer) {
+  const workbook = XLSX.read(arrayBuffer, { type: "array" });
+  const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+  return XLSX.utils.sheet_to_json(firstSheet, { header: 1, raw: false, defval: "" });
+}
+
+function parseCompanyExcel(rows) {
+  const headerIndex = rows.findIndex((row) => row.some((cell) => /year|年度|西元年|民國年/i.test(String(cell))));
+  if (headerIndex < 0) return [];
+
+  const headers = rows[headerIndex].map(normalizeHeader);
+  return rows.slice(headerIndex + 1)
+    .map((row) => companyRecordFromRow(headers, row))
+    .filter((record) => record.year && record.month >= 1 && record.month <= 12)
+    .filter((record) => num(record.closedRevenue) !== 0 || num(record.profit) !== 0);
+}
+
+function companyRecordFromRow(headers, row) {
+  const get = (...names) => {
+    const normalizedNames = names.map(normalizeHeader);
+    const index = headers.findIndex((header) => normalizedNames.some((name) => header.includes(name)));
+    return index >= 0 ? row[index] : "";
+  };
+
+  const rocYear = numberFromText(get("民國年"));
+  const year = numberFromText(get("year", "西元年", "年度", "年份")) || (rocYear ? rocYear + 1911 : state.year);
+  const month = numberFromText(get("month", "月份", "月"));
+
+  return {
+    year,
+    month,
+    targetRevenue: numberFromText(get("targetRevenue", "預測業績", "目標業績")),
+    closedRevenue: numberFromText(get("closedRevenue", "關帳業績", "業績")),
+    agentCount: numberFromText(get("agentCount", "人數")),
+    profit: numberFromText(get("profit", "盈餘"))
+  };
+}
+
+function upsertCompanyRecords(records) {
+  records.forEach((record) => {
+    let existing = state.company.find((row) => row.year === record.year && row.month === record.month);
+    if (!existing) {
+      existing = {
+        year: record.year,
+        month: record.month,
+        targetRevenue: 0,
+        closedRevenue: 0,
+        agentCount: 0,
+        profit: 0
+      };
+      state.company.push(existing);
+    }
+
+    existing.closedRevenue = num(record.closedRevenue);
+    existing.profit = num(record.profit);
+  });
+}
+
+function normalizeHeader(header) {
+  return String(header || "").replace(/\s/g, "");
+}
+
+function partnerRecordFromRow(headers, row) {
+  const findIndex = (...names) => headers.findIndex((header) => names.some((name) => header.includes(name)));
+  const get = (...names) => {
+    const index = findIndex(...names);
+    return index >= 0 ? row[index] : "";
+  };
+  const getOptionalNumber = (...names) => {
+    const index = findIndex(...names);
+    return index >= 0 ? numberFromText(row[index]) : undefined;
+  };
+
+  const dateText = get("日期", "月份", "年月");
+  const parsedMonth = numberFromText(dateText);
+  return {
+    year: numberFromText(get("年度", "年份")) || yearFromText(dateText) || state.year,
+    month: parsedMonth >= 1 && parsedMonth <= 12 ? parsedMonth : Number(els.partnerMonth.value),
+    partnerName: get("夥伴", "姓名", "業務"),
+    annualRevenueTarget: getOptionalNumber("年度業績目標", "年度目標", "業績目標"),
+    actualRevenue: getOptionalNumber("本月業績", "實際業績", "當月業績"),
+    actualListings: getOptionalNumber("進案"),
+    actualOffers: getOptionalNumber("收斡", "斡旋"),
+    actualClosings: getOptionalNumber("成交件數", "成交")
+  };
+}
+
+function upsertPartnerRecords(records) {
+  records.forEach((record) => {
+    if (isExcludedPartnerName(record.partnerName)) return;
+    const person = ensureHistoricalPerson(record.partnerName);
+    record.personId = record.personId || person?.id || "";
+    const existing = state.partners.find((item) => item.year === record.year && item.month === record.month && item.partnerName === record.partnerName);
+    const patch = Object.fromEntries(Object.entries(record).filter(([, value]) => value !== undefined));
+    if (existing) {
+      Object.assign(existing, patch);
+    } else {
+      state.partners.push({
+        year: record.year,
+        month: record.month,
+        partnerName: record.partnerName,
+        personId: record.personId,
+        annualRevenueTarget: record.annualRevenueTarget ?? latestAnnualTarget(record.partnerName),
+        actualRevenue: record.actualRevenue ?? 0,
+        actualListings: record.actualListings ?? 0,
+        actualOffers: record.actualOffers ?? 0,
+        actualClosings: record.actualClosings ?? 0
+      });
+    }
+  });
+}
+
+function ensureHistoricalPerson(name) {
+  if (!name || isExcludedPartnerName(name)) return null;
+  let person = personByName(name);
+  if (person) return person;
+
+  const now = new Date().toISOString();
+  person = {
+    id: personIdFromName(name),
+    name,
+    branch: "大湳店",
+    title: "歷史夥伴",
+    phone: "",
+    email: "",
+    hireDate: "",
+    exitDate: "",
+    status: "inactive",
+    sort: state.people.length + 1,
+    note: "由歷史排名表匯入時自動建立",
+    createdAt: now,
+    updatedAt: now
+  };
+  state.people.push(person);
+  return person;
+}
+
+function renderPartners() {
+  const month = Number(els.partnerMonth.value);
+  const reportNames = peopleForReports(state.year);
+  const visiblePartners = isCompactView() ? [els.partnerName.value].filter(Boolean) : reportNames;
+  const rows = visiblePartners.map((name) => findPartnerRecord(name, month) || defaultPartnerRecord(name, month));
+  els.partnerCards.innerHTML = rows.map((record) => partnerCardHtml(record, month)).join("");
+
+  els.partnerCards.querySelectorAll("[data-ai-partner-coach]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      handleAiPartnerCoaching(btn.dataset.aiPartnerCoach);
+    });
+  });
+}
+
+function defaultPartnerRecord(partnerName, month) {
+  return {
+    year: state.year,
+    month,
+    partnerName,
+    annualRevenueTarget: latestAnnualTarget(partnerName),
+    actualRevenue: 0,
+    actualListings: 0,
+    actualOffers: 0,
+    actualClosings: 0
+  };
+}
+
+function partnerCardHtml(record, selectedMonth) {
+  const annualTarget = num(record.annualRevenueTarget) || latestAnnualTarget(record.partnerName);
+  const ytdRevenue = partnerYtdRevenue(record.partnerName, selectedMonth, state.year);
+  const lastAnnualRevenue = partnerAnnualRevenue(record.partnerName, state.year - 1);
+  const achievement = rate(ytdRevenue, annualTarget);
+  const latestRevenue = latestRevenueMonth(record.partnerName);
+  const cardClass = achievement <= 50 ? "card-low" : achievement < 80 ? "card-mid" : "card-high";
+
+  return `
+    <article class="partner-card ${cardClass}">
+      <h3>${escapeHtml(record.partnerName)}${personStatusLabel(record.partnerName)}</h3>
+      <p class="advice">年度業績目標 ${money(annualTarget)}萬，目前${money(ytdRevenue)}萬達成 ${achievement}%</p>
+      <div class="metric-row">
+        ${metric("去年總業績", `${money(lastAnnualRevenue)}萬`, `${state.year - 1} 年`)}
+        ${metric("本月業績", `${money(record.actualRevenue)}萬`, `${selectedMonth}月`)}
+        ${metric("最近成交", latestRevenue || "尚無", "年/月")}
+      </div>
+      <div class="metric-row">
+        ${metric("進案", `${record.actualListings}件`, "本月")}
+        ${metric("收斡", `${record.actualOffers}件`, "本月")}
+        ${metric("成交", `${record.actualClosings}件`, "本月")}
+      </div>
+      <div class="progress"><span style="--value:${Math.min(100, achievement)}%"></span></div>
+      <p class="advice">${partnerAdvice(record, achievement, ytdRevenue - partnerYtdRevenue(record.partnerName, selectedMonth, state.year - 1))}</p>
+      <div class="partner-card-actions">
+        <button class="ai-btn ai-btn-sm" type="button" data-ai-partner-coach="${escapeHtml(record.partnerName)}">✨ AI 個人教練建議</button>
+      </div>
+    </article>
+  `;
+}
+
+function partnerYtdRevenue(name, month, year) {
+  return state.partners
+    .filter((record) => record.year === year && record.partnerName === name && record.month <= month)
+    .reduce((sum, record) => sum + num(record.actualRevenue), 0);
+}
+
+function partnerAnnualRevenue(name, year) {
+  return state.partners
+    .filter((record) => record.year === year && record.partnerName === name)
+    .reduce((sum, record) => sum + num(record.actualRevenue), 0);
+}
+
+function latestRevenueMonth(name) {
+  const record = [...state.partners]
+    .filter((item) => item.partnerName === name && num(item.actualRevenue) > 0)
+    .sort((a, b) => (b.year - a.year) || (b.month - a.month))[0];
+  return record ? `${record.year}/${String(record.month).padStart(2, "0")}` : "";
+}
+
+function latestClosingMonth(name) {
+  return latestRevenueMonth(name);
+}
+
+function saveWeeklyGoal(event) {
+  event.preventDefault();
+  const person = personByName(els.weeklyPartner.value);
+  if (!person || person.status !== "active") {
+    showToast("請先選擇在職夥伴。", "warning");
+    return;
+  }
+  state.weekly.push({
+    id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
+    year: state.year,
+    meetingDate: els.weeklyDate.value,
+    personId: person.id,
+    partnerName: person.name,
+    type: els.weeklyType.value,
+    target: num(els.weeklyTarget.value),
+    actual: num(els.weeklyActual.value),
+    source: "manual"
+  });
+  saveState();
+  els.weeklyTarget.value = 1;
+  els.weeklyActual.value = 0;
+  renderWeekly();
+  showToast("已新增週目標");
+}
+
+function importWeeklyExcel(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    const text = String(reader.result || "");
+    const imported = parseGoalExcel(text);
+    state.weekly.push(...imported);
+    saveState();
+    renderWeekly();
+    els.importStatus.textContent = `已匯入 ${imported.length} 筆小目標統計`;
+    showToast(`已匯入 ${imported.length} 筆小目標統計`);
+    els.weeklyImportFile.value = "";
+  };
+  reader.readAsText(file, "utf-8");
+}
+
+function parseGoalExcel(text) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(text, "text/html");
+  const rows = [...doc.querySelectorAll("tr")].map((tr) => [...tr.children].map((cell) => cell.textContent.trim()));
+  if (!rows.length) return [];
+
+  const bodyRows = rows.filter((row) => row.length >= 6 && row[0] && row[0] !== "夥伴");
+  return bodyRows.map((row) => {
+    const partnerName = row[0];
+    const latestDate = normalizeDate(row[1]) || isoDate(new Date());
+    const totalGoals = numberFromText(row[3]);
+    const completedGoals = numberFromText(row[4]);
+    return {
+      id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
+      year: Number(latestDate.slice(0, 4)) || state.year,
+      meetingDate: latestDate,
+      partnerName,
+      type: "月小目標統計",
+      target: totalGoals,
+      actual: completedGoals,
+      source: "import"
+    };
+  }).filter((goal) => allPartnerNames().includes(goal.partnerName) && goal.target > 0);
+}
+
+function renderWeekly() {
+  const rows = state.weekly.filter((goal) => goal.year === state.year);
+  const grouped = rows.reduce((map, goal) => {
+    map[goal.partnerName] = map[goal.partnerName] || [];
+    map[goal.partnerName].push(goal);
+    return map;
+  }, {});
+
+  const visiblePartners = isCompactView() && els.weeklyFilterPartner ? [els.weeklyFilterPartner.value] : peopleForReports(state.year);
+  els.weeklyBoard.innerHTML = visiblePartners.map((name) => weeklyCardHtml(name, grouped[name] || [])).join("");
+}
+
+function weeklyCardHtml(name, goals) {
+  const completedGoals = goals.filter((goal) => goal.actual >= goal.target);
+  const done = completedGoals.length;
+  const totalTarget = goals.reduce((sum, goal) => sum + num(goal.target), 0);
+  const totalActual = goals.reduce((sum, goal) => sum + num(goal.actual), 0);
+  const rateValue = rate(totalActual, totalTarget);
+  const closingGoals = goals.filter((goal) => goal.type === "成交");
+  const closingTarget = closingGoals.reduce((sum, goal) => sum + num(goal.target), 0);
+  const closingActual = closingGoals.reduce((sum, goal) => sum + num(goal.actual), 0);
+  const closingRate = rate(closingActual, closingTarget);
+  const weakType = weakestWeeklyType(goals);
+  const completedText = completedGoals.length
+    ? completedGoals.map((goal) => `${goal.type} ${goal.actual}/${goal.target}`).join("、")
+    : "尚無完成小目標";
+  return `
+    <article class="weekly-card">
+      <h3>${escapeHtml(name)}${personStatusLabel(name)}</h3>
+      <p class="advice">本年 ${goals.length} 筆週目標/匯入統計，達成 ${done} 筆</p>
+      <div class="metric-row">
+        ${metric("完成小目標數", `${done}`, `共 ${goals.length} 筆`)}
+        ${metric("完成百分率", `${rateValue}%`, `${totalActual}/${totalTarget}`)}
+        ${metric("成交率", `${closingRate}%`, closingTarget ? `${closingActual}/${closingTarget}` : "尚無成交目標")}
+      </div>
+      <div class="progress"><span style="--value:${Math.min(100, rateValue)}%"></span></div>
+      <p class="completed-list"><strong>完成的小目標：</strong>${completedText}</p>
+      <p class="advice">${weeklyAdvice(rateValue, weakType)}</p>
+    </article>
+  `;
+}
+
+function openPersonDialog(person = null) {
+  els.personDialogTitle.textContent = person ? "編輯夥伴" : "新增夥伴";
+  els.personId.value = person?.id || "";
+  els.personName.value = person?.name || "";
+  els.personBranch.value = person?.branch || "大湳店";
+  els.personTitle.value = person?.title || "業務";
+  els.personPhone.value = person?.phone || "";
+  els.personEmail.value = person?.email || "";
+  els.personHireDate.value = person?.hireDate || "";
+  els.personExitDate.value = person?.exitDate || "";
+  els.personStatus.value = person?.status || "active";
+  els.personSort.value = person?.sort || state.people.length + 1;
+  els.personNote.value = person?.note || "";
+  els.personDialog.showModal();
+}
+
+function savePerson() {
+  const name = els.personName.value.trim();
+  if (!name) {
+    showToast("請輸入夥伴姓名。", "warning");
+    return;
+  }
+
+  const id = els.personId.value;
+  const now = new Date().toISOString();
+  const payload = {
+    name,
+    branch: els.personBranch.value.trim() || "大湳店",
+    title: els.personTitle.value.trim() || "業務",
+    phone: els.personPhone.value.trim(),
+    email: els.personEmail.value.trim(),
+    hireDate: els.personHireDate.value,
+    exitDate: els.personExitDate.value,
+    status: els.personStatus.value,
+    sort: Number(els.personSort.value || state.people.length + 1),
+    note: els.personNote.value.trim(),
+    updatedAt: now
+  };
+
+  if (payload.status === "inactive" && !payload.exitDate) payload.exitDate = isoDate(new Date());
+  if (payload.status === "active") payload.exitDate = "";
+
+  if (id) {
+    const person = personById(id);
+    if (!person) return;
+    const oldName = person.name;
+    Object.assign(person, payload);
+    if (oldName !== payload.name) renamePersonInRecords(oldName, payload.name, person.id);
+  } else {
+    if (personByName(payload.name)) {
+      showToast("已有相同姓名的夥伴，請改用編輯原資料。", "warning");
+      return;
+    }
+    state.people.push({
+      id: personIdFromName(payload.name),
+      ...payload,
+      createdAt: now
+    });
+  }
+
+  els.personDialog.close();
+  refreshAfterPeopleChange();
+  showToast("夥伴資料已儲存");
+}
+
+function renamePersonInRecords(oldName, newName, personId) {
+  state.partners.forEach((record) => {
+    if (record.partnerName === oldName || record.personId === personId) {
+      record.partnerName = newName;
+      record.personId = personId;
+    }
+  });
+  state.weekly.forEach((goal) => {
+    if (goal.partnerName === oldName || goal.personId === personId) {
+      goal.partnerName = newName;
+      goal.personId = personId;
+    }
+  });
+}
+
+function togglePersonStatus(id) {
+  const person = personById(id);
+  if (!person) return;
+  person.status = person.status === "active" ? "inactive" : "active";
+  if (person.status === "inactive" && !person.exitDate) person.exitDate = isoDate(new Date());
+  if (person.status === "active") person.exitDate = "";
+  person.updatedAt = new Date().toISOString();
+  refreshAfterPeopleChange();
+  showToast(`已更新夥伴狀態：${person.status === "active" ? "在職" : "離職/停用"}`);
+}
+
+function refreshAfterPeopleChange() {
+  setupPersonSelects();
+  saveState();
+  render();
+}
+
+function renderPeople() {
+  if (!els.peopleTable) return;
+  const status = els.peopleStatusFilter.value;
+  const query = els.peopleSearch.value.trim().toLowerCase();
+  const rows = sortedPeople(true).filter((person) => {
+    const matchStatus = status === "all" || person.status === status;
+    const haystack = `${person.name} ${person.branch} ${person.title} ${person.phone} ${person.email}`.toLowerCase();
+    return matchStatus && haystack.includes(query);
+  });
+
+  els.peopleTable.innerHTML = `
+    <div class="people-table-desktop">
+      <table>
+        <thead>
+          <tr>
+            <th>排序</th><th>姓名</th><th>店別</th><th>職稱</th><th>到職日</th><th>離職日</th><th>狀態</th><th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.length ? rows.map(personRowHtml).join("") : `<tr><td colspan="8">目前沒有符合條件的人員。</td></tr>`}
+        </tbody>
+      </table>
+    </div>
+    <div class="people-card-list">
+      ${rows.length ? rows.map(personCardHtml).join("") : `<div class="people-empty">目前沒有符合條件的人員。</div>`}
+    </div>
+  `;
+}
+
+function personRowHtml(person) {
+  return `
+    <tr>
+      <td data-label="排序">${person.sort}</td>
+      <td data-label="姓名"><strong class="${person.status === "inactive" ? "inactive-name" : ""}">${escapeHtml(person.name)}</strong></td>
+      <td data-label="店別">${escapeHtml(person.branch)}</td>
+      <td data-label="職稱">${escapeHtml(person.title)}</td>
+      <td data-label="到職日">${person.hireDate || "-"}</td>
+      <td data-label="離職日">${person.exitDate || "-"}</td>
+      <td data-label="狀態"><span class="status-pill ${person.status}">${person.status === "active" ? "在職" : "離職／停用"}</span></td>
+      <td data-label="操作">
+        <div class="row-actions">
+          <button type="button" data-person-action="edit" data-person-id="${person.id}">編輯</button>
+          <button class="${person.status === "active" ? "danger-action" : ""}" type="button" data-person-action="toggle" data-person-id="${person.id}">
+            ${person.status === "active" ? "設為離職" : "恢復在職"}
+          </button>
+        </div>
+      </td>
+    </tr>
+  `;
+}
+
+function personCardHtml(person) {
+  return `
+    <article class="person-card">
+      <div class="person-card-head">
+        <div>
+          <strong class="${person.status === "inactive" ? "inactive-name" : ""}">${escapeHtml(person.name)}</strong>
+          <span>${escapeHtml(person.branch)}｜${escapeHtml(person.title)}</span>
+        </div>
+        <span class="status-pill ${person.status}">${person.status === "active" ? "在職" : "離職／停用"}</span>
+      </div>
+      <dl class="person-card-info">
+        <div><dt>排序</dt><dd>${person.sort}</dd></div>
+        <div><dt>到職日</dt><dd>${person.hireDate || "-"}</dd></div>
+        <div><dt>離職日</dt><dd>${person.exitDate || "-"}</dd></div>
+        <div><dt>聯絡</dt><dd>${escapeHtml(person.phone || person.email || "-")}</dd></div>
+      </dl>
+      <div class="row-actions">
+        <button type="button" data-person-action="edit" data-person-id="${person.id}">編輯</button>
+        <button class="${person.status === "active" ? "danger-action" : ""}" type="button" data-person-action="toggle" data-person-id="${person.id}">
+          ${person.status === "active" ? "設為離職" : "恢復在職"}
+        </button>
+      </div>
+    </article>
+  `;
+}
+
+function metric(label, value, context) {
+  return `<div class="metric"><span>${label}</span><strong>${value}</strong><span>${context}</span></div>`;
+}
+
+function drawLineChart(svg, rows, realKey, targetKey) {
+  const width = 720;
+  const height = 280;
+  const pad = 42;
+  const values = rows.flatMap((row) => [realKey === "actualRevenue" ? monthlyPartnerRevenue(row.month) : row[realKey], row[targetKey]]);
+  const max = Math.max(1, ...values);
+  const x = (index) => pad + (index * (width - pad * 2)) / 11;
+  const y = (value) => height - pad - (value / max) * (height - pad * 2);
+  const latestActualMonth = Math.max(0, ...rows
+    .filter((row) => monthlyPartnerRows(row.month).some(hasPartnerActivity))
+    .map((row) => row.month));
+  const actualRows = rows.filter((row) => row.month <= latestActualMonth);
+  const line = (key, sourceRows = rows) => sourceRows.map((row, index) => {
+    const value = key === "actualRevenue" ? monthlyPartnerRevenue(row.month) : row[key];
+    const rowIndex = rows.indexOf(row);
+    return `${index ? "L" : "M"} ${x(rowIndex)} ${y(value)}`;
+  }).join(" ");
+
+  svg.innerHTML = chartBase(width, height, pad, max) + `
+    <path class="line-target" d="${line(targetKey)}"></path>
+    ${actualRows.length ? `<path class="line-real" d="${line(realKey, actualRows)}"></path>` : ""}
+    ${actualRows.map((row) => `<circle class="dot" cx="${x(rows.indexOf(row))}" cy="${y(monthlyPartnerRevenue(row.month))}" r="4"></circle>`).join("")}
+    <text class="label" x="${width - 170}" y="24">實際業績</text>
+    <text class="label" x="${width - 88}" y="24">預測目標</text>
+  `;
+}
+
+function drawProfitChart(svg, rows) {
+  const width = 720;
+  const height = 280;
+  const pad = 42;
+  const profits = rows.map(calcProfit);
+  const efficiencies = rows.map((row) => {
+    const agentCount = monthlyAgentCount(row.month);
+    return agentCount ? monthlyPartnerRevenue(row.month) / agentCount : 0;
+  });
+  const min = Math.min(0, ...profits);
+  const max = Math.max(1, ...profits, ...efficiencies);
+  const range = max - min || 1;
+  const barWidth = (width - pad * 2) / 12 * 0.58;
+  const y = (value) => pad + ((max - value) / range) * (height - pad * 2);
+  const zeroY = y(0);
+  const efficiencyLine = efficiencies.map((value, index) => `${index ? "L" : "M"} ${pad + (index * (width - pad * 2)) / 11} ${y(value)}`).join(" ");
+  svg.innerHTML = signedChartBase(width, height, pad, min, max, y) + `<line class="zero-axis" x1="${pad}" y1="${zeroY}" x2="${width - pad}" y2="${zeroY}"></line>` + rows.map((row, index) => {
+    const x = pad + index * ((width - pad * 2) / 12) + 8;
+    const profit = calcProfit(row);
+    const top = Math.min(y(profit), zeroY);
+    return `<rect class="${profit < 0 ? "bar-profit-negative" : "bar-profit"}" x="${x}" y="${top}" width="${barWidth}" height="${Math.abs(y(profit) - zeroY)}"></rect>`;
+  }).join("") + `<path class="line-efficiency" d="${efficiencyLine}"></path>
+    ${efficiencies.map((value, index) => `<circle class="dot-efficiency" cx="${pad + (index * (width - pad * 2)) / 11}" cy="${y(value)}" r="3"></circle>`).join("")}
+    <text class="label" x="${width - 150}" y="24">長條：盈餘　折線：人效</text>`;
+}
+
+function drawGapChart(svg, rows) {
+  const width = 980;
+  const height = 280;
+  const pad = 58;
+  const max = Math.max(1, ...rows.map((row) => Math.max(num(row.targetRevenue), monthlyPartnerRevenue(row.month))));
+  const baseY = height - pad;
+  const gapLabelY = 18;
+  const barWidth = (width - pad * 2) / 12 * 0.58;
+  const y = (value) => baseY - (value / max) * (height - pad * 2);
+  svg.innerHTML = chartBase(width, height, pad, max) + `
+    ${rows.map((row, index) => {
+      const target = Math.max(0, num(row.targetRevenue));
+      const actual = Math.max(0, monthlyPartnerRevenue(row.month));
+      const gap = actual - target;
+      const x = pad + index * ((width - pad * 2) / 12) + 10;
+      const fillHeight = baseY - y(actual);
+      let targetLabelY = Math.max(47, y(target) - 7);
+      let actualLabelY = Math.max(32, y(actual) - 7);
+      if (actual > target && targetLabelY - actualLabelY < 15) {
+        actualLabelY = Math.max(32, targetLabelY - 15);
+      } else if (actual < target && actualLabelY - targetLabelY < 15) {
+        actualLabelY = targetLabelY + 15;
+      }
+      const gapText = gap > 0 ? `+${money(gap)}` : gap < 0 ? `-${money(Math.abs(gap))}` : "0";
+      return `<rect class="bar-target-outline" x="${x}" y="${y(target)}" width="${barWidth}" height="${baseY - y(target)}"></rect>
+        ${actual > 0 ? `<rect class="bar-actual-fill" x="${x}" y="${y(actual)}" width="${barWidth}" height="${fillHeight}"></rect>` : ""}
+        <text class="bar-gap-value ${gap > 0 ? "positive" : gap < 0 ? "negative" : "equal"}" x="${x + barWidth / 2}" y="${gapLabelY}">${gapText}</text>
+        <text class="bar-value bar-target-value" x="${x + barWidth / 2}" y="${targetLabelY}">目標 ${money(target)}</text>
+        ${actual > 0 ? `<text class="bar-value bar-actual-value" x="${x + barWidth / 2}" y="${actualLabelY}">業績 ${money(actual)}</text>` : ""}`;
+    }).join("")}
+  `;
+}
+
+function signedChartBase(width, height, pad, min, max, y) {
+  return `${[0, .25, .5, .75, 1].map((ratio) => {
+    const value = min + (max - min) * ratio;
+    const lineY = y(value);
+    return `<line class="grid-line" x1="${pad}" y1="${lineY}" x2="${width - pad}" y2="${lineY}"></line>
+      <text class="label" x="3" y="${lineY + 4}">${Math.round(value)}</text>`;
+  }).join("")}
+  ${monthLabels.map((label, index) => `<text class="label" x="${pad + (index * (width - pad * 2)) / 11 - 10}" y="${height - 12}">${label}</text>`).join("")}`;
+}
+
+function chartBase(width, height, pad, max) {
+  return `
+    <line class="axis" x1="${pad}" y1="${height - pad}" x2="${width - pad}" y2="${height - pad}"></line>
+    <line class="axis" x1="${pad}" y1="${pad}" x2="${pad}" y2="${height - pad}"></line>
+    ${[0, .25, .5, .75, 1].map((ratio) => {
+      const y = height - pad - ratio * (height - pad * 2);
+      return `<line class="grid-line" x1="${pad}" y1="${y}" x2="${width - pad}" y2="${y}"></line>
+        <text class="label" x="6" y="${y + 4}">${Math.round(max * ratio)}</text>`;
+    }).join("")}
+    ${monthLabels.map((label, index) => `<text class="label" x="${pad + (index * (width - pad * 2)) / 11 - 10}" y="${height - 12}">${label}</text>`).join("")}
+  `;
+}
+
+function calcProfit(row) {
+  return num(row.profit);
+}
+
+function rate(actual, target) {
+  if (!target) return actual ? 100 : 0;
+  return Math.round((actual / target) * 100);
+}
+
+function sameMonthYoYRate(month) {
+  return percentChange(
+    monthlyPartnerRevenueForYear(state.year, month),
+    monthlyPartnerRevenueForYear(state.year - 1, month)
+  );
+}
+
+function percentChange(current, previous) {
+  if (!previous) return null;
+  return ((current - previous) / previous) * 100;
+}
+
+function num(value) {
+  return Number(value) || 0;
+}
+
+function money(value) {
+  return (Number(value) || 0).toFixed(2);
+}
+
+function signedMoney(value) {
+  const number = Number(value) || 0;
+  return `${number >= 0 ? "+" : ""}${number.toFixed(2)}`;
+}
+
+function signedPercent(value) {
+  if (value === null || value === undefined || Number.isNaN(Number(value))) return "—";
+  const number = Number(value) || 0;
+  return `${number >= 0 ? "+" : ""}${number.toFixed(2)}%`;
+}
+
+function percentStatusClass(value) {
+  if (value === null || value === undefined || Number.isNaN(Number(value))) return "";
+  return value >= 0 ? "status-good" : "status-risk";
+}
+
+function numberFromText(value) {
+  const match = String(value || "").match(/-?\d+(\.\d+)?/);
+  return match ? Number(match[0]) : 0;
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function stripHtml(value) {
+  const div = document.createElement("div");
+  div.innerHTML = String(value ?? "");
+  return div.textContent || div.innerText || "";
+}
+
+function normalizeDate(value) {
+  const text = String(value || "").trim();
+  const match = text.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+  if (!match) return "";
+  return `${match[1]}-${String(match[2]).padStart(2, "0")}-${String(match[3]).padStart(2, "0")}`;
+}
+
+function yearFromText(value) {
+  const match = String(value || "").match(/(20\d{2})/);
+  return match ? Number(match[1]) : 0;
+}
+
+function partnerAdvice(record, achievement, yoyGap) {
+  if (achievement >= 80) return "年度達成率已進入衝刺區，建議聚焦高成交機率客戶與收斡品質。";
+  if (achievement <= 50) return "目前低於 50%，先穩住進案與收斡，每週鎖定 2 到 3 個高影響行動。";
+  if (yoyGap < 0) return "低於去年同期，建議回頭檢查近三個月進案來源與追蹤節奏。";
+  return "進度尚可，建議維持本月業績節奏並增加收斡轉成交。";
+}
+
+function weakestWeeklyType(goals) {
+  const misses = goals.filter((goal) => goal.actual < goal.target);
+  if (!misses.length) return "";
+  const counts = misses.reduce((map, goal) => {
+    map[goal.type] = (map[goal.type] || 0) + 1;
+    return map;
+  }, {});
+  return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
+}
+
+function weeklyStatus(value) {
+  if (value >= 80) return "加碼挑戰";
+  if (value >= 60) return "穩定追蹤";
+  return "需要聚焦";
+}
+
+function weeklyAdvice(value, type) {
+  if (!type) return "尚無明顯卡關項目，建議保持固定回報節奏。";
+  if (value < 60) return `完成率偏低，建議本週先聚焦 ${type}，目標項目不要超過 3 個。`;
+  return `${type} 是近期較容易卡住的項目，建議會議時先討論阻礙與下一步行動。`;
+}
+
+function profitStatus(value) {
+  if (value > 0) return "營運為正";
+  if (value === 0) return "損益兩平";
+  return "需要控管成本";
+}
+
+function isoDate(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function exportOverviewReport() {
+  const rows = annualPartnerRows();
+  const annualTarget = num(state.annualTargets[state.year]);
+  const html = reportHtml("年度總覽", `
+    <h1>${state.year} 年度總覽</h1>
+    <p>年度目標：${money(annualTarget)} 萬元</p>
+    ${els.overviewPartnerTable.innerHTML}
+  `);
+  downloadExcel(`年度總覽-${state.year}.xls`, html);
+}
+
+function exportCompanyReport() {
+  const html = reportHtml("月營運", `
+    <h1>${state.year} 月營運報表</h1>
+    ${els.companyTable.innerHTML}
+  `);
+  downloadExcel(`月營運-${state.year}.xls`, html);
+}
+
+function exportPartnersReport() {
+  const month = Number(els.partnerMonth.value);
+  const rows = peopleForReports(state.year).map((partnerName) => findPartnerRecord(partnerName, month) || defaultPartnerRecord(partnerName, month));
+  const table = `
+    <table>
+      <thead><tr><th>夥伴</th><th>年度目標</th><th>本月業績</th><th>進案</th><th>收斡</th><th>成交</th><th>年度達成率</th><th>去年同期差</th><th>最近成交</th></tr></thead>
+      <tbody>
+        ${rows.map((record) => {
+          const annualTarget = num(record.annualRevenueTarget) || latestAnnualTarget(record.partnerName);
+          const ytdRevenue = partnerYtdRevenue(record.partnerName, month, state.year);
+          const lastYtdRevenue = partnerYtdRevenue(record.partnerName, month, state.year - 1);
+          return `<tr>
+            <td>${record.partnerName}</td>
+            <td>${money(annualTarget)}</td>
+            <td>${money(record.actualRevenue)}</td>
+            <td>${record.actualListings}</td>
+            <td>${record.actualOffers}</td>
+            <td>${record.actualClosings}</td>
+            <td>${rate(ytdRevenue, annualTarget)}%</td>
+            <td>${signedMoney(ytdRevenue - lastYtdRevenue)}</td>
+            <td>${latestClosingMonth(record.partnerName) || ""}</td>
+          </tr>`;
+        }).join("")}
+      </tbody>
+    </table>
+  `;
+  downloadExcel(`夥伴績效-${state.year}-${month}月.xls`, reportHtml("夥伴績效", `<h1>${state.year} 年 ${month} 月夥伴績效</h1>${table}`));
+}
+
+function exportWeeklyReport() {
+  const rows = state.weekly.filter((goal) => goal.year === state.year);
+  const table = `
+    <table>
+      <thead><tr><th>夥伴</th><th>日期</th><th>項目</th><th>目標</th><th>實際</th><th>是否完成</th><th>來源</th></tr></thead>
+      <tbody>
+        ${rows.map((goal) => `<tr>
+          <td>${goal.partnerName}</td>
+          <td>${goal.meetingDate}</td>
+          <td>${goal.type}</td>
+          <td>${goal.target}</td>
+          <td>${goal.actual}</td>
+          <td>${goal.actual >= goal.target ? "完成" : "未完成"}</td>
+          <td>${goal.source || "manual"}</td>
+        </tr>`).join("")}
+      </tbody>
+    </table>
+  `;
+  downloadExcel(`週目標-${state.year}.xls`, reportHtml("週目標", `<h1>${state.year} 週目標報表</h1>${table}`));
+}
+
+function reportHtml(title, body) {
+  return `
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <xml>
+          <x:ExcelWorkbook xmlns:x="urn:schemas-microsoft-com:office:excel">
+            <x:ExcelWorksheets>
+              <x:ExcelWorksheet>
+                <x:Name>${title}</x:Name>
+                <x:WorksheetOptions>
+                  <x:PageSetup>
+                    <x:Layout x:Orientation="Landscape"/>
+                    <x:PageMargins x:Left="0.25" x:Right="0.25" x:Top="0.45" x:Bottom="0.45"/>
+                  </x:PageSetup>
+                  <x:FitToPage/>
+                  <x:Print>
+                    <x:FitWidth>1</x:FitWidth>
+                    <x:FitHeight>0</x:FitHeight>
+                    <x:ValidPrinterInfo/>
+                    <x:PaperSizeIndex>9</x:PaperSizeIndex>
+                    <x:HorizontalResolution>600</x:HorizontalResolution>
+                    <x:VerticalResolution>600</x:VerticalResolution>
+                  </x:Print>
+                  <x:Selected/>
+                  <x:FreezePanes/>
+                  <x:FrozenNoSplit/>
+                  <x:SplitHorizontal>1</x:SplitHorizontal>
+                  <x:TopRowBottomPane>1</x:TopRowBottomPane>
+                </x:WorksheetOptions>
+              </x:ExcelWorksheet>
+            </x:ExcelWorksheets>
+          </x:ExcelWorkbook>
+        </xml>
+        <style>
+          @page {
+            size: A4 landscape;
+            margin: 0.45cm 0.35cm;
+            mso-page-orientation: landscape;
+          }
+
+          body {
+            font-family: "Microsoft JhengHei", Arial, sans-serif;
+            color: #1e2930;
+            margin: 0;
+          }
+
+          h1 {
+            font-size: 18pt;
+            margin: 0 0 8px;
+            color: #1f4f8f;
+          }
+
+          p {
+            font-size: 10pt;
+            margin: 0 0 8px;
+          }
+
+          table {
+            border-collapse: collapse;
+            width: 100%;
+            table-layout: fixed;
+            mso-table-lspace: 0pt;
+            mso-table-rspace: 0pt;
+          }
+
+          thead {
+            display: table-header-group;
+          }
+
+          tr {
+            page-break-inside: avoid;
+          }
+
+          th,
+          td {
+            border: 1px solid #7d8b94;
+            padding: 5px 6px;
+            font-size: 9pt;
+            vertical-align: middle;
+            text-align: center;
+            mso-number-format:"\\@";
+            word-break: break-word;
+          }
+
+          th {
+            background: #dff1ea;
+            color: #163f32;
+            font-weight: bold;
+          }
+
+          td:first-child,
+          th:first-child {
+            text-align: left;
+          }
+
+          strong {
+            font-weight: bold;
+            color: #1f4f8f;
+          }
+
+          .print-note {
+            color: #647076;
+            font-size: 9pt;
+            margin-bottom: 8px;
+          }
+        </style>
+        <title>${title}</title>
+      </head>
+      <body>
+        <div class="print-note">A4 橫向列印版面，建議列印時選擇「符合頁寬」。</div>
+        ${body}
+      </body>
+    </html>
+  `;
+}
+
+function downloadExcel(filename, html) {
+  const blob = new Blob(["\ufeff", html], { type: "application/vnd.ms-excel;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+(function setupOfferManagement() {
+  const root = document.querySelector("#offers");
+  if (!root) return;
+
+  const KEY = "danan-offer-tracker-static-v1";
+  let records = loadOffers();
+  let currentFilter = "all";
+  let archivePage = 0;
+
+  const o = {
+    form: document.querySelector("#offerForm"), editId: document.querySelector("#offerEditId"), formTitle: document.querySelector("#offerFormTitle"),
+    startDate: document.querySelector("#offerStartDate"), endDate: document.querySelector("#offerEndDate"), caseName: document.querySelector("#offerCaseName"),
+    developer: document.querySelector("#offerDeveloper"), salesperson: document.querySelector("#offerSalesperson"), price: document.querySelector("#offerPrice"),
+    deposit: document.querySelector("#offerDeposit"), serviceFee: document.querySelector("#offerServiceFee"), serviceFeeUnit: document.querySelector("#offerServiceFeeUnit"),
+    bottomPrice: document.querySelector("#offerBottomPrice"), hasClause: document.querySelector("#offerHasClause"), clauseField: document.querySelector("#offerClauseField"),
+    clauseNote: document.querySelector("#offerClauseNote"), eighty: document.querySelector("#offerEightyPercent"), submitBtn: document.querySelector("#offerSubmitBtn"),
+    cancelEdit: document.querySelector("#offerCancelEdit"), resetBtn: document.querySelector("#offerResetBtn"), cards: document.querySelector("#offerCards"),
+    openFormBtn: document.querySelector("#openOfferFormBtn"), closeFormBtn: document.querySelector("#closeOfferFormBtn"), formBackdrop: document.querySelector("#offerFormBackdrop"),
+    filters: document.querySelector("#offerFilters"), allCount: document.querySelector("#offerAllCount"), activeCount: document.querySelector("#offerActiveCount"), urgentCount: document.querySelector("#offerUrgentCount"),
+    expiredCount: document.querySelector("#offerExpiredCount"), withdrawnCount: document.querySelector("#offerWithdrawnCount"), closedCount: document.querySelector("#offerClosedCount"),
+    importFile: document.querySelector("#offerImportFile"), importStatus: document.querySelector("#offerImportStatus"), templateBtn: document.querySelector("#offerTemplateBtn")
+  };
+
+  o.form.addEventListener("submit", saveOffer);
+  o.hasClause.addEventListener("change", toggleClause);
+  o.resetBtn.addEventListener("click", resetOfferForm);
+  o.cancelEdit.addEventListener("click", () => { resetOfferForm(); closeOfferFormDrawer(); });
+  o.openFormBtn.addEventListener("click", () => { resetOfferForm(); openOfferFormDrawer(); });
+  o.closeFormBtn.addEventListener("click", closeOfferFormDrawer);
+  o.formBackdrop.addEventListener("click", closeOfferFormDrawer);
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && o.form.classList.contains("drawer-open")) closeOfferFormDrawer();
+  });
+  o.filters.addEventListener("click", changeOfferFilter);
+  o.cards.addEventListener("click", handleOfferCardAction);
+  o.importFile.addEventListener("change", importOfferExcel);
+  o.templateBtn.addEventListener("click", downloadOfferTemplate);
+  window.addEventListener("offers-cloud-loaded", refreshOffersFromCloud);
+  renderOffers();
+
+  function loadOffers() {
+    try {
+      const saved = Array.isArray(state.offers) ? state.offers : JSON.parse(localStorage.getItem(KEY) || "[]");
+      return Array.isArray(saved) ? saved.map(normalizeOffer) : [];
+    } catch (error) { return []; }
+  }
+
+  function refreshOffersFromCloud() {
+    records = (Array.isArray(state.offers) ? state.offers : []).map(normalizeOffer);
+    renderOffers();
+  }
+
+  function normalizeOffer(item) {
+    return {
+      ...item,
+      startDate: normalizeOfferDate(item.startDate),
+      endDate: normalizeOfferDate(item.endDate),
+      serviceFeeUnit: item.serviceFeeUnit || "萬元",
+      offerStatus: item.offerStatus || (item.closedAt ? "closed" : item.withdrawnAt ? "withdrawn" : "active")
+    };
+  }
+
+  function normalizeOfferDate(value) {
+    const text = String(value || "").trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text;
+    const date = new Date(text);
+    if (Number.isNaN(date.getTime())) return text.slice(0, 10);
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Taipei", year: "numeric", month: "2-digit", day: "2-digit"
+    }).formatToParts(date).reduce((result, part) => {
+      if (part.type !== "literal") result[part.type] = part.value;
+      return result;
+    }, {});
+    return parts.year + "-" + parts.month + "-" + parts.day;
+  }
+
+  function persistOffers() {
+    state.offers = records;
+    localStorage.setItem(KEY, JSON.stringify(records));
+    saveState();
+  }
+
+  function todayStart() {
+    const date = new Date(); date.setHours(0, 0, 0, 0); return date;
+  }
+
+  function daysRemaining(endDate) {
+    return Math.round((new Date(endDate + "T00:00:00").getTime() - todayStart().getTime()) / 86400000);
+  }
+
+  function isRefunded(record) { return record.offerStatus === "withdrawn" || Boolean(record.withdrawnAt); }
+  function isDeal(record) { return record.offerStatus === "closed" || Boolean(record.closedAt); }
+  function isExpiredOffer(record) { return !isRefunded(record) && !isDeal(record) && daysRemaining(record.endDate) < 0; }
+  function isActiveOffer(record) { return !isRefunded(record) && !isDeal(record) && daysRemaining(record.endDate) >= 0; }
+
+  function statusTime(record) {
+    if (isDeal(record)) return Number(record.closedAt) || 0;
+    if (isRefunded(record)) return Number(record.withdrawnAt) || 0;
+    if (isExpiredOffer(record)) return new Date(record.endDate + "T00:00:00").getTime();
+    return 0;
+  }
+
+  function statusLabel(record) {
+    if (isDeal(record)) return "成交日期";
+    if (isRefunded(record)) return "退斡日期";
+    if (isExpiredOffer(record)) return "逾期日期";
+    return "";
+  }
+
+  function formatDateTime(time) {
+    if (!time) return "";
+    return new Intl.DateTimeFormat("zh-TW", { year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(time));
+  }
+
+  function isOlderThanSixMonths(record) {
+    const time = statusTime(record);
+    if (!time) return false;
+    const cutoff = todayStart(); cutoff.setMonth(cutoff.getMonth() - 6);
+    return time < cutoff.getTime();
+  }
+
+  function countdown(record) {
+    if (isDeal(record)) return "賀成交";
+    if (isRefunded(record)) return "已退斡旋｜斡旋停止";
+    const days = daysRemaining(record.endDate);
+    if (days > 0) return "剩 " + days + " 天";
+    if (days === 0) return "今天到期";
+    return "已逾期 " + Math.abs(days) + " 天";
+  }
+
+  function saveOffer(event) {
+    event.preventDefault();
+    if (o.endDate.value < o.startDate.value) {
+      showToast("收斡迄日不可早於起日。", "warning");
+      return;
+    }
+    const old = records.find((item) => item.id === o.editId.value);
+    const reactivateWithdrawn = Boolean(old && isRefunded(old) && o.endDate.value > old.endDate && daysRemaining(o.endDate.value) >= 0);
+    const record = normalizeOffer({
+      id: old?.id || makeOfferId(), startDate: o.startDate.value, endDate: o.endDate.value, caseName: o.caseName.value.trim(),
+      developer: o.developer.value.trim(), salesperson: o.salesperson.value.trim(), offerPrice: numberValue(o.price.value),
+      deposit: numberValue(o.deposit.value), serviceFee: numberValue(o.serviceFee.value), serviceFeeUnit: o.serviceFeeUnit.value,
+      bottomPrice: numberValue(o.bottomPrice.value), hasClause: o.hasClause.value, clauseNote: o.hasClause.value === "是" ? o.clauseNote.value.trim() : "",
+      reachesEightyPercent: o.eighty.value, createdAt: old?.createdAt || Date.now(), offerStatus: reactivateWithdrawn ? "active" : old?.offerStatus || "active",
+      withdrawnAt: reactivateWithdrawn ? undefined : old?.withdrawnAt, closedAt: old?.closedAt
+    });
+    records = old ? records.map((item) => item.id === old.id ? record : item) : [...records, record];
+    persistOffers(); resetOfferForm(); closeOfferFormDrawer();
+    if (reactivateWithdrawn) applyOfferFilter("active"); else renderOffers();
+    showToast(old ? "已更新收斡旋卡片" : "已新增收斡旋卡片");
+    document.querySelector("#offerCards")?.scrollIntoView({ behavior: "smooth" });
+  }
+
+  function resetOfferForm() {
+    o.form.reset(); o.editId.value = ""; o.formTitle.textContent = "新增收斡資料"; o.submitBtn.textContent = "建立收斡卡片";
+    o.cancelEdit.hidden = true; o.serviceFeeUnit.value = "萬元"; o.eighty.value = "未確認"; toggleClause();
+  }
+
+  function isOfferDrawerView() {
+    return window.matchMedia("(max-width: 640px)").matches;
+  }
+
+  function openOfferFormDrawer() {
+    if (!isOfferDrawerView()) return;
+    o.form.classList.add("drawer-open");
+    o.formBackdrop.classList.add("visible");
+    o.openFormBtn.setAttribute("aria-expanded", "true");
+    document.body.classList.add("drawer-active");
+    window.setTimeout(() => o.startDate?.focus(), 180);
+  }
+
+  function closeOfferFormDrawer() {
+    o.form.classList.remove("drawer-open");
+    o.formBackdrop.classList.remove("visible");
+    o.openFormBtn.setAttribute("aria-expanded", "false");
+    document.body.classList.remove("drawer-active");
+  }
+
+  function toggleClause() {
+    const show = o.hasClause.value === "是"; o.clauseField.hidden = !show; o.clauseNote.required = show;
+    if (!show) o.clauseNote.value = "";
+  }
+
+  function changeOfferFilter(event) {
+    const button = event.target.closest("[data-offer-filter]"); if (!button) return;
+    applyOfferFilter(button.dataset.offerFilter);
+    document.querySelector("#offerCards")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function applyOfferFilter(filter) {
+    currentFilter = filter; archivePage = 0;
+    o.filters.querySelectorAll("button").forEach((button) => {
+      const selected = button.dataset.offerFilter === filter;
+      button.classList.toggle("active", selected);
+      button.setAttribute("aria-pressed", String(selected));
+    });
+    renderOffers();
+  }
+
+  function filteredOffers() {
+    return records.filter((record) => {
+      if (currentFilter === "active") return isActiveOffer(record);
+      if (currentFilter === "urgent") return isActiveOffer(record) && daysRemaining(record.endDate) <= 3;
+      if (currentFilter === "expired") return isExpiredOffer(record);
+      if (currentFilter === "withdrawn") return isRefunded(record);
+      if (currentFilter === "closed") return isDeal(record);
+      return true;
+    }).sort((a, b) => {
+      const activeA = statusTime(a) === 0, activeB = statusTime(b) === 0;
+      if (activeA && activeB) return daysRemaining(a.endDate) - daysRemaining(b.endDate) || b.createdAt - a.createdAt;
+      if (activeA !== activeB) return activeA ? -1 : 1;
+      return statusTime(b) - statusTime(a) || b.createdAt - a.createdAt;
+    });
+  }
+
+  function renderOffers() {
+    const visible = filteredOffers();
+    const recent = visible.filter((record) => !isOlderThanSixMonths(record));
+    const archived = visible.filter(isOlderThanSixMonths);
+    archivePage = Math.min(archivePage, Math.max(archived.length - 1, 0));
+    o.allCount.textContent = records.length;
+    o.activeCount.textContent = records.filter(isActiveOffer).length;
+    o.urgentCount.textContent = records.filter((record) => isActiveOffer(record) && daysRemaining(record.endDate) <= 3).length;
+    o.expiredCount.textContent = records.filter(isExpiredOffer).length;
+    o.withdrawnCount.textContent = records.filter(isRefunded).length;
+    o.closedCount.textContent = records.filter(isDeal).length;
+    if (!visible.length) { o.cards.innerHTML = '<div class="offer-empty">目前沒有此分類的收斡卡片</div>'; return; }
+    const recentHtml = recent.map(offerCardHtml).join("");
+    const archiveHtml = archived.length ? archiveHtmlBlock(archived) : "";
+    o.cards.innerHTML = recentHtml + archiveHtml;
+  }
+
+  function offerCardHtml(record) {
+    const refunded = isRefunded(record), deal = isDeal(record), expired = isExpiredOffer(record), days = daysRemaining(record.endDate);
+    const cardClass = deal ? "closed" : refunded ? "withdrawn" : expired ? "expired" : days <= 3 ? "urgent" : "";
+    const label = deal ? "已成交" : refunded ? "已退斡旋" : expired ? "已逾期" : "進行中";
+    const statusDate = statusTime(record) ? '<div class="wide offer-status-date"><dt>' + statusLabel(record) + '</dt><dd>' + formatDateTime(statusTime(record)) + '</dd></div>' : "";
+    const stateButtons = !refunded && !deal ? '<button class="refund" data-offer-action="refund" data-id="' + record.id + '" type="button">退斡</button><button class="deal" data-offer-action="deal" data-id="' + record.id + '" type="button">賀成交</button>' : "";
+    return '<article class="offer-card ' + cardClass + '"><div class="offer-card-top"><div><small>收斡案名</small><h4>' + safe(record.caseName) + '</h4></div><span class="offer-status">' + label + '</span></div>' +
+      '<dl class="offer-details"><div class="wide"><dt>收斡期間</dt><dd>' + safe(record.startDate) + ' ～ ' + safe(record.endDate) + '</dd></div>' + statusDate +
+      detail("開發", record.developer) + detail("銷售", record.salesperson) + detail("出價／承購總價", amount(record.offerPrice) + " 萬") +
+      detail("本案底價", record.bottomPrice ? amount(record.bottomPrice) + " 萬" : "尚未提供") + detail("斡旋金", amount(record.deposit) + " 萬") +
+      detail("服務費", amount(record.serviceFee) + " " + (record.serviceFeeUnit || "萬元")) + detail("是否有但書", record.hasClause + (record.clauseNote ? "｜" + record.clauseNote : "")) +
+      detail("達開價八成", record.reachesEightyPercent || "未確認") + '</dl><div class="offer-countdown">' + countdown(record) + '</div>' +
+      '<div class="offer-card-actions"><button class="ai-btn ai-btn-sm" data-offer-action="ai-offer-strategy" data-id="' + record.id + '" type="button">✨ AI 談判與議價話術</button><button data-offer-action="edit" data-id="' + record.id + '" type="button">修改資料／延長時間</button>' + stateButtons +
+      '<button data-offer-action="delete" data-id="' + record.id + '" type="button">刪除</button></div></article>';
+  }
+
+  function archiveHtmlBlock(archived) {
+    return '<section class="offer-archive"><div class="offer-archive-head"><div><span>半年前歷史卡片</span><strong>第 ' + (archivePage + 1) + '／' + archived.length + ' 頁</strong></div><span>依狀態日期由近到遠</span></div>' +
+      offerCardHtml(archived[archivePage]) + '<div class="offer-archive-controls"><button data-offer-action="archive-prev" type="button" ' + (archivePage === 0 ? "disabled" : "") + '>上一頁</button><span>' + (archivePage + 1) + ' / ' + archived.length + '</span><button data-offer-action="archive-next" type="button" ' + (archivePage >= archived.length - 1 ? "disabled" : "") + '>下一頁</button></div></section>';
+  }
+
+  function handleOfferCardAction(event) {
+    const button = event.target.closest("[data-offer-action]"); if (!button) return;
+    const action = button.dataset.offerAction;
+    if (action === "archive-prev") { archivePage = Math.max(0, archivePage - 1); renderOffers(); return; }
+    if (action === "archive-next") { archivePage += 1; renderOffers(); return; }
+    const record = records.find((item) => item.id === button.dataset.id); if (!record) return;
+    if (action === "ai-offer-strategy") handleAiOfferStrategy(record.id);
+    if (action === "edit") editOffer(record);
+    if (action === "refund") changeOfferStatus(record.id, "withdrawn");
+    if (action === "deal") changeOfferStatus(record.id, "closed");
+    if (action === "delete") {
+      openConfirmDialog("確定要刪除這張收斡旋卡片嗎？", () => {
+        records = records.filter((item) => item.id !== record.id);
+        persistOffers();
+        renderOffers();
+        showToast("已刪除該收斡旋卡片");
+      });
+    }
+  }
+
+  function changeOfferStatus(id, status) {
+    records = records.map((item) => item.id === id ? { ...item, offerStatus: status, withdrawnAt: status === "withdrawn" ? Date.now() : undefined, closedAt: status === "closed" ? Date.now() : undefined } : item);
+    persistOffers(); applyOfferFilter(status);
+    showToast(status === "closed" ? "恭喜賀成交！" : "已更新狀態為退斡旋");
+  }
+
+  function editOffer(record) {
+    o.editId.value = record.id; o.startDate.value = record.startDate; o.endDate.value = record.endDate; o.caseName.value = record.caseName;
+    o.developer.value = record.developer; o.salesperson.value = record.salesperson; o.price.value = record.offerPrice; o.deposit.value = record.deposit;
+    o.serviceFee.value = record.serviceFee; o.serviceFeeUnit.value = record.serviceFeeUnit || "萬元"; o.bottomPrice.value = record.bottomPrice || "";
+    o.hasClause.value = record.hasClause || "否"; o.clauseNote.value = record.clauseNote || ""; o.eighty.value = record.reachesEightyPercent || "未確認";
+    o.formTitle.textContent = "編輯收斡資料"; o.submitBtn.textContent = "儲存修改"; o.cancelEdit.hidden = false; toggleClause();
+    if (isOfferDrawerView()) openOfferFormDrawer(); else root.scrollIntoView({ behavior: "smooth" });
+  }
+
+  function importOfferExcel(event) {
+    const file = event.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const workbook = XLSX.read(reader.result, { type: "array", cellDates: true });
+        const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: "" });
+        const imported = rows.map(offerFromExcelRow).filter((item) => item.startDate && item.endDate && item.caseName && item.developer && item.salesperson);
+        records = [...records, ...imported]; persistOffers(); renderOffers();
+        const statusMsg = "已成功匯入 " + imported.length + " 筆資料";
+        o.importStatus.textContent = statusMsg;
+        showToast(statusMsg);
+      } catch (error) {
+        o.importStatus.textContent = "Excel 讀取失敗，請使用下載的範本";
+        showToast("Excel 讀取失敗，請使用下載的範本", "warning");
+      }
+      o.importFile.value = "";
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function downloadOfferTemplate() {
+    if (typeof XLSX === "undefined") {
+      showToast("Excel 元件尚未載入，請重新整理後再試。", "warning");
+      return;
+    }
+    const sheet = XLSX.utils.json_to_sheet([{ "收斡起日":"2026/07/18", "收斡迄日":"2026/07/21", "收斡案名":"範例案名", "開發":"王小明", "銷售":"陳小美", "出價/承購總價":1280, "斡旋金/金額":20, "服務費":4, "服務費單位":"%", "是否有但書":"是", "但書內容":"貸款需達八成", "出價是否有開價八成":"是", "本案底價":"" }]);
+    const book = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(book, sheet, "收斡旋資料"); XLSX.writeFile(book, "大湳店收斡旋匯入範本.xlsx");
+    showToast("已下載收斡旋匯入範本");
+  }
+
+  function cell(row, ...keys) { for (const key of keys) if (row[key] !== undefined && row[key] !== null && String(row[key]).trim() !== "") return row[key]; return ""; }
+  function excelDate(value) { if (value instanceof Date) return isoLocal(value); if (typeof value === "number" && XLSX?.SSF) { const d = XLSX.SSF.parse_date_code(value); if (d) return d.y + "-" + String(d.m).padStart(2,"0") + "-" + String(d.d).padStart(2,"0"); } const m = String(value || "").replace(/[.]/g,"/").match(/^(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})/); return m ? m[1] + "-" + m[2].padStart(2,"0") + "-" + m[3].padStart(2,"0") : ""; }
+  function isoLocal(date) { const offset = date.getTimezoneOffset() * 60000; return new Date(date.getTime() - offset).toISOString().slice(0,10); }
+  function detail(label, value) { return '<div><dt>' + label + '</dt><dd>' + safe(value) + '</dd></div>'; }
+  function amount(value) { return new Intl.NumberFormat("zh-TW").format(numberValue(value)); }
+  function numberValue(value) { return Number(value) || 0; }
+  function makeOfferId() { return "offer-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2,8); }
+  function safe(value) { return String(value ?? "").replace(/[&<>'"]/g, (char) => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", "'":"&#39;", '"':"&quot;" }[char])); }
+})();
+  </script>
 </body>
 </html>
